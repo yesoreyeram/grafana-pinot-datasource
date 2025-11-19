@@ -1,0 +1,23 @@
+{
+  "schemaName": "airlineStats",
+  "dimensionFieldSpecs": [
+    { "name": "AirlineID", "dataType": "INT" },
+    { "name": "Carrier", "dataType": "STRING" },
+    { "name": "Origin", "dataType": "STRING" },
+    { "name": "Destination", "dataType": "STRING" }
+  ],
+  "metricFieldSpecs": [
+    { "name": "Flights", "dataType": "INT" },
+    { "name": "OnTimeArrivals", "dataType": "INT" },
+    { "name": "DelayedArrivals", "dataType": "INT" },
+    { "name": "Cancelled", "dataType": "INT" }
+  ],
+  "dateTimeFieldSpecs": [
+    {
+      "name": "eventTime",
+      "dataType": "LONG",
+      "format": "1:HOURS:EPOCH",
+      "granularity": "1:HOURS"
+    }
+  ]
+}

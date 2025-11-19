@@ -1,0 +1,21 @@
+{
+  "schemaName": "baseballStats",
+  "dimensionFieldSpecs": [
+    { "name": "PlayerName", "dataType": "STRING" },
+    { "name": "Team", "dataType": "STRING" },
+    { "name": "Season", "dataType": "INT" }
+  ],
+  "metricFieldSpecs": [
+    { "name": "AtBats", "dataType": "INT" },
+    { "name": "Hits", "dataType": "INT" },
+    { "name": "HomeRuns", "dataType": "INT" }
+  ],
+  "dateTimeFieldSpecs": [
+    {
+      "name": "eventTime",
+      "dataType": "LONG",
+      "format": "1:DAYS:EPOCH",
+      "granularity": "1:DAYS"
+    }
+  ]
+}

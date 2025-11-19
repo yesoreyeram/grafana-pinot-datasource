@@ -1,5 +1,112 @@
 services:
-  grafana:
-    extends:
-      file: .config/docker-compose-base.yaml
-      service: grafana
+  # grafana:
+  #   extends:
+  #     file: .config/docker-compose-base.yaml
+  #     service: grafana
+  #   depends_on:
+  #     - pinot-broker
+
+  pinot-zookeeper:
+    image: zookeeper:3.8
+    container_name: pinot-zookeeper
+    restart: unless-stopped
+    ports:
+      - 2181:2181
+    environment:
+      ZOO_MY_ID: 1
+      ZOO_CLIENT_PORT: 2181
+      ZOO_TICK_TIME: 2000
+      ZOO_INIT_LIMIT: 5
+      ZOO_SYNC_LIMIT: 2
+      ZOO_STANDALONE_ENABLED: 'true'
+      ZOO_AUTOPURGE_SNAPRETAINCOUNT: 3
+      ZOO_AUTOPURGE_PURGEINTERVAL: 0
+      ZOO_CFG_EXTRA: containerCheckIntervalMs=0
+
+  pinot-controller:
+    image: ${PINOT_IMAGE:-apachepinot/pinot:1.2.0}
+    container_name: pinot-controller
+    restart: unless-stopped
+    depends_on:
+      - pinot-zookeeper
+    ports:
+      - 9000:9000
+    environment:
+      JAVA_OPTS: "-Xms512M -Xmx512M"
+    healthcheck:
+      test:
+        - CMD
+        - sh
+        - -c
+        - >-
+          curl -fsS http://localhost:9000/health || wget -qO- http://localhost:9000/health
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+    command: >-
+      StartController
+      -clusterName PinotCluster
+      -zkAddress pinot-zookeeper:2181
+      -controllerPort 9000
+
+  pinot-broker:
+    image: ${PINOT_IMAGE:-apachepinot/pinot:1.2.0}
+    container_name: pinot-broker
+    restart: unless-stopped
+    depends_on:
+      pinot-controller:
+        condition: service_healthy
+    ports:
+      - 8099:8099
+    environment:
+      JAVA_OPTS: "-Xms512M -Xmx512M"
+    command: >-
+      StartBroker
+      -clusterName PinotCluster
+      -zkAddress pinot-zookeeper:2181
+      -brokerPort 8099
+
+  pinot-server:
+    image: ${PINOT_IMAGE:-apachepinot/pinot:1.2.0}
+    container_name: pinot-server
+    restart: unless-stopped
+    depends_on:
+      pinot-controller:
+        condition: service_healthy
+    ports:
+      - 8098:8098
+    environment:
+      JAVA_OPTS: "-Xms1G -Xmx1G"
+    command: >-
+      StartServer
+      -clusterName PinotCluster
+      -zkAddress pinot-zookeeper:2181
+      -serverPort 8098
+      -dataDir /var/pinot/server/data
+
+  pinot-minion:
+    image: ${PINOT_IMAGE:-apachepinot/pinot:1.2.0}
+    container_name: pinot-minion
+    restart: unless-stopped
+    depends_on:
+      pinot-controller:
+        condition: service_healthy
+    command: >-
+      StartMinion
+      -clusterName PinotCluster
+      -zkAddress pinot-zookeeper:2181
+
+  pinot-init:
+    image: ${PINOT_IMAGE:-apachepinot/pinot:1.2.0}
+    container_name: pinot-init
+    depends_on:
+      pinot-controller:
+        condition: service_healthy
+      pinot-broker:
+        condition: service_started
+      pinot-server:
+        condition: service_started
+    volumes:
+      - ./docker/pinot:/pinot-samples:ro
+    entrypoint: ["/bin/bash", "/pinot-samples/bootstrap.sh"]

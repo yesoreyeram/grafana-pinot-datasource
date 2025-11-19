@@ -1,0 +1,25 @@
+{
+  "tableName": "airlineStats",
+  "tableType": "OFFLINE",
+  "segmentsConfig": {
+    "timeColumnName": "eventTime",
+    "timeType": "MILLISECONDS",
+    "schemaName": "airlineStats",
+    "replication": "1"
+  },
+  "tableIndexConfig": {
+    "loadMode": "MMAP",
+    "invertedIndexColumns": ["Carrier", "Origin", "Destination"]
+  },
+  "ingestionConfig": {
+    "batchIngestionConfig": {
+      "segmentIngestionType": "APPEND",
+      "segmentIngestionFrequency": "DAILY"
+    }
+  },
+  "tenants": {
+    "broker": "DefaultTenant",
+    "server": "DefaultTenant"
+  },
+  "metadata": {}
+}

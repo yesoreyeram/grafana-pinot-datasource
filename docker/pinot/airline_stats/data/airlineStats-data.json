@@ -1,0 +1,4 @@
+{"eventTime":1672531200000,"AirlineID":19805,"Carrier":"UA","Origin":"SFO","Destination":"ORD","Flights":12,"OnTimeArrivals":9,"DelayedArrivals":2,"Cancelled":1}
+{"eventTime":1672704000000,"AirlineID":19393,"Carrier":"DL","Origin":"ATL","Destination":"JFK","Flights":18,"OnTimeArrivals":15,"DelayedArrivals":2,"Cancelled":1}
+{"eventTime":1672963200000,"AirlineID":19690,"Carrier":"AA","Origin":"DFW","Destination":"LAX","Flights":16,"OnTimeArrivals":10,"DelayedArrivals":4,"Cancelled":2}
+{"eventTime":1673222400000,"AirlineID":19930,"Carrier":"WN","Origin":"DEN","Destination":"PHX","Flights":11,"OnTimeArrivals":8,"DelayedArrivals":1,"Cancelled":2}
