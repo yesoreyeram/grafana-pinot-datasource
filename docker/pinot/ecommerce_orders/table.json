@@ -1,0 +1,25 @@
+{
+  "tableName": "ecommerce_orders",
+  "tableType": "OFFLINE",
+  "segmentsConfig": {
+    "timeColumnName": "order_timestamp",
+    "timeType": "MILLISECONDS",
+    "schemaName": "ecommerce_orders",
+    "replication": "1"
+  },
+  "tableIndexConfig": {
+    "loadMode": "MMAP",
+    "invertedIndexColumns": ["customer_id", "status", "payment_method", "shipping_country"]
+  },
+  "ingestionConfig": {
+    "batchIngestionConfig": {
+      "segmentIngestionType": "APPEND",
+      "segmentIngestionFrequency": "DAILY"
+    }
+  },
+  "tenants": {
+    "broker": "DefaultTenant",
+    "server": "DefaultTenant"
+  },
+  "metadata": {}
+}

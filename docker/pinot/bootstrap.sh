@@ -132,13 +132,30 @@ run_ingestion_job() {
 wait_for_controller
 wait_for_instances
 
+# Add schemas
 add_schema /pinot-samples/airline_stats/schema.json
 add_schema /pinot-samples/baseball_stats/schema.json
+add_schema /pinot-samples/ecommerce_customers/schema.json
+add_schema /pinot-samples/ecommerce_products/schema.json
+add_schema /pinot-samples/ecommerce_orders/schema.json
+add_schema /pinot-samples/ecommerce_order_items/schema.json
 
+# Add tables
 add_table /pinot-samples/airline_stats/table.json
 add_table /pinot-samples/baseball_stats/table.json
+add_table /pinot-samples/ecommerce_customers/table.json
+add_table /pinot-samples/ecommerce_products/table.json
+add_table /pinot-samples/ecommerce_orders/table.json
+add_table /pinot-samples/ecommerce_order_items/table.json
 
+# Load sample data
 run_ingestion_job airlineStats /pinot-samples/airline_stats/data /pinot-samples/airline_stats/schema.json /pinot-samples/airline_stats/table.json /tmp/pinot-airlineStats
 run_ingestion_job baseballStats /pinot-samples/baseball_stats/data /pinot-samples/baseball_stats/schema.json /pinot-samples/baseball_stats/table.json /tmp/pinot-baseballStats
+
+# Load e-commerce data
+run_ingestion_job ecommerce_customers /pinot-samples/ecommerce_customers/data /pinot-samples/ecommerce_customers/schema.json /pinot-samples/ecommerce_customers/table.json /tmp/pinot-ecommerce_customers
+run_ingestion_job ecommerce_products /pinot-samples/ecommerce_products/data /pinot-samples/ecommerce_products/schema.json /pinot-samples/ecommerce_products/table.json /tmp/pinot-ecommerce_products
+run_ingestion_job ecommerce_orders /pinot-samples/ecommerce_orders/data /pinot-samples/ecommerce_orders/schema.json /pinot-samples/ecommerce_orders/table.json /tmp/pinot-ecommerce_orders
+run_ingestion_job ecommerce_order_items /pinot-samples/ecommerce_order_items/data /pinot-samples/ecommerce_order_items/schema.json /pinot-samples/ecommerce_order_items/table.json /tmp/pinot-ecommerce_order_items
 
 echo "Sample Pinot tables are ready"

@@ -1,10 +1,10 @@
 services:
-  # grafana:
-  #   extends:
-  #     file: .config/docker-compose-base.yaml
-  #     service: grafana
-  #   depends_on:
-  #     - pinot-broker
+  grafana:
+    extends:
+      file: .config/docker-compose-base.yaml
+      service: grafana
+    depends_on:
+      - pinot-broker
 
   pinot-zookeeper:
     image: zookeeper:3.8
