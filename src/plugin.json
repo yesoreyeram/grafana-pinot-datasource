@@ -1,20 +1,21 @@
 {
   "$schema": "https://raw.githubusercontent.com/grafana/grafana/main/docs/sources/developers/plugins/plugin.schema.json",
   "type": "datasource",
-  "name": "Pinot",
+  "name": "Apache Pinot™",
   "id": "yesoreyeram-pinot-datasource",
   "metrics": true,
   "backend": true,
-  "executable": "gpx_pinot",
+  "alerting": true,
+  "executable": "gpx_grafana_pinot_datasource",
   "info": {
-    "description": "",
+    "description": "Grafana datasource plugin for Apache Pinot™",
     "author": {
-      "name": "Yesoreyeram"
+      "name": "Sriramajeyam Sugumaran"
     },
     "keywords": ["datasource"],
     "logos": {
-      "small": "img/logo.svg",
-      "large": "img/logo.svg"
+      "small": "pinot.png",
+      "large": "pinot.png"
     },
     "links": [],
     "screenshots": [],
