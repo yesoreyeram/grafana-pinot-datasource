@@ -1,11 +1,63 @@
 apiVersion: 1
 
 datasources:
-  - name: 'Apache Pinot™'
+  # Broker-only mode with no authentication
+  - name: 'Apache Pinot (Broker Only - No Auth)'
     type: 'yesoreyeram-pinot-datasource'
-    uid: apache_pinot_default
+    uid: pinot_broker_only_no_auth
+    jsonData:
+      brokerUrl: 'http://pinot-broker:8099'
+      brokerAuthType: 'none'
+    secureJsonData:
+
+  # Broker + Controller mode with no authentication
+  - name: 'Apache Pinot (Full - No Auth)'
+    type: 'yesoreyeram-pinot-datasource'
+    uid: pinot_full_no_auth
+    isDefault: true
     jsonData:
       brokerUrl: 'http://pinot-broker:8099'
       controllerUrl: 'http://pinot-controller:9000'
-      authType: 'none'
+      brokerAuthType: 'none'
+      controllerAuthType: 'none'
     secureJsonData:
+
+  # Broker-only mode with basic authentication
+  - name: 'Apache Pinot (Broker Only - Basic Auth)'
+    type: 'yesoreyeram-pinot-datasource'
+    uid: pinot_broker_only_basic_auth
+    jsonData:
+      brokerUrl: 'http://pinot-broker:8099'
+      brokerAuthType: 'basic'
+      brokerUsername: 'broker_user'
+    secureJsonData:
+      brokerPassword: 'broker_password'
+
+  # Broker + Controller with same basic authentication
+  - name: 'Apache Pinot (Full - Same Basic Auth)'
+    type: 'yesoreyeram-pinot-datasource'
+    uid: pinot_full_same_basic_auth
+    jsonData:
+      brokerUrl: 'http://pinot-broker:8099'
+      controllerUrl: 'http://pinot-controller:9000'
+      brokerAuthType: 'basic'
+      brokerUsername: 'pinot_user'
+      controllerAuthType: 'basic'
+      controllerUsername: 'pinot_user'
+    secureJsonData:
+      brokerPassword: 'pinot_password'
+      controllerPassword: 'pinot_password'
+
+  # Broker + Controller with different authentication
+  - name: 'Apache Pinot (Full - Different Auth)'
+    type: 'yesoreyeram-pinot-datasource'
+    uid: pinot_full_different_auth
+    jsonData:
+      brokerUrl: 'http://pinot-broker:8099'
+      controllerUrl: 'http://pinot-controller:9000'
+      brokerAuthType: 'basic'
+      brokerUsername: 'broker_user'
+      controllerAuthType: 'bearer'
+    secureJsonData:
+      brokerPassword: 'broker_password'
+      controllerToken: 'controller_bearer_token'
