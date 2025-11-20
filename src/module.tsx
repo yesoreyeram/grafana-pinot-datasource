@@ -11,9 +11,10 @@ type Config = {
   controllerUrl?: string;
   brokerAuthType?: AuthType;
   brokerUsername?: string;
+  brokerTlsSkipVerify?: boolean;
   controllerAuthType?: AuthType;
   controllerUsername?: string;
-  tlsSkipVerify?: boolean;
+  controllerTlsSkipVerify?: boolean;
 } & DataSourceJsonData;
 
 type SecureConfig = {
@@ -202,12 +203,22 @@ const ConfigEditor = (props: any) => {
     });
   };
 
-  const onTlsSkipVerifyChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const onBrokerTlsSkipVerifyChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     onOptionsChange({
       ...options,
       jsonData: {
         ...jsonData,
-        tlsSkipVerify: event.target.checked,
+        brokerTlsSkipVerify: event.target.checked,
+      },
+    });
+  };
+
+  const onControllerTlsSkipVerifyChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    onOptionsChange({
+      ...options,
+      jsonData: {
+        ...jsonData,
+        controllerTlsSkipVerify: event.target.checked,
       },
     });
   };
@@ -295,6 +306,17 @@ const ConfigEditor = (props: any) => {
               />
             </Field>
           )}
+
+          <Field 
+            label="Skip TLS Verify (Broker)" 
+            description="Skip TLS certificate verification for broker connections (not recommended for production)"
+          >
+            <Input
+              type="checkbox"
+              checked={jsonData.brokerTlsSkipVerify || false}
+              onChange={onBrokerTlsSkipVerifyChange}
+            />
+          </Field>
         </FieldSet>
       </Collapse>
 
@@ -379,20 +401,21 @@ const ConfigEditor = (props: any) => {
                   />
                 </Field>
               )}
+
+              <Field 
+                label="Skip TLS Verify (Controller)" 
+                description="Skip TLS certificate verification for controller connections (not recommended for production)"
+              >
+                <Input
+                  type="checkbox"
+                  checked={jsonData.controllerTlsSkipVerify || false}
+                  onChange={onControllerTlsSkipVerifyChange}
+                />
+              </Field>
             </>
           )}
         </FieldSet>
       </Collapse>
-
-      <FieldSet label="TLS/SSL Settings">
-        <Field label="Skip TLS Verify" description="Skip TLS certificate verification (not recommended for production)">
-          <Input
-            type="checkbox"
-            checked={jsonData.tlsSkipVerify || false}
-            onChange={onTlsSkipVerifyChange}
-          />
-        </Field>
-      </FieldSet>
     </>
   );
 };

@@ -8,6 +8,7 @@ datasources:
     jsonData:
       brokerUrl: 'http://pinot-broker:8099'
       brokerAuthType: 'none'
+      brokerTlsSkipVerify: false
     secureJsonData:
 
   # Broker + Controller mode with no authentication
@@ -20,6 +21,8 @@ datasources:
       controllerUrl: 'http://pinot-controller:9000'
       brokerAuthType: 'none'
       controllerAuthType: 'none'
+      brokerTlsSkipVerify: false
+      controllerTlsSkipVerify: false
     secureJsonData:
 
   # Broker-only mode with basic authentication
@@ -30,6 +33,7 @@ datasources:
       brokerUrl: 'http://pinot-broker:8099'
       brokerAuthType: 'basic'
       brokerUsername: 'broker_user'
+      brokerTlsSkipVerify: false
     secureJsonData:
       brokerPassword: 'broker_password'
 
@@ -44,11 +48,13 @@ datasources:
       brokerUsername: 'pinot_user'
       controllerAuthType: 'basic'
       controllerUsername: 'pinot_user'
+      brokerTlsSkipVerify: false
+      controllerTlsSkipVerify: false
     secureJsonData:
       brokerPassword: 'pinot_password'
       controllerPassword: 'pinot_password'
 
-  # Broker + Controller with different authentication
+  # Broker + Controller with different authentication and different TLS settings
   - name: 'Apache Pinot (Full - Different Auth)'
     type: 'yesoreyeram-pinot-datasource'
     uid: pinot_full_different_auth
@@ -58,6 +64,8 @@ datasources:
       brokerAuthType: 'basic'
       brokerUsername: 'broker_user'
       controllerAuthType: 'bearer'
+      brokerTlsSkipVerify: false
+      controllerTlsSkipVerify: true
     secureJsonData:
       brokerPassword: 'broker_password'
       controllerToken: 'controller_bearer_token'
