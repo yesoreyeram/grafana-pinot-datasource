@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { DataSourcePlugin, DataSourceJsonData, DataSourceInstanceSettings, SelectableValue } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
 import { DataSourceWithBackend } from '@grafana/runtime';
-import { Field, SecretInput, Input, FieldSet, Select, Alert, Collapse } from '@grafana/ui';
+import { Field, SecretInput, Input, FieldSet, Select, Collapse } from '@grafana/ui';
 
 type AuthType = 'none' | 'basic' | 'bearer';
 
@@ -32,6 +32,83 @@ class DataSource extends DataSourceWithBackend<Query, Config> {
   }
 }
 
+// Selectors for UI text content
+const selectors = {
+  ConfigEditor: {
+    // Broker section
+    BrokerSection: { label: 'Broker Configuration' },
+    BrokerURL: {
+      label: 'Broker URL',
+      description: 'URL of the Apache Pinot broker (e.g., http://localhost:8099)',
+      placeholder: 'http://localhost:8099',
+    },
+    BrokerAuthType: {
+      label: 'Authentication Type',
+      description: 'Select the authentication method for the broker',
+    },
+    BrokerUsername: {
+      label: 'Username',
+      description: 'Username for broker basic authentication',
+      placeholder: 'Username',
+    },
+    BrokerPassword: {
+      label: 'Password',
+      description: 'Password for broker basic authentication',
+      placeholder: 'Password',
+    },
+    BrokerToken: {
+      label: 'Bearer Token',
+      description: 'Bearer token for broker authentication',
+      placeholder: 'Bearer token',
+    },
+    BrokerTlsSkipVerify: {
+      label: 'Skip TLS Verify (Broker)',
+      description: 'Skip TLS certificate verification for broker connections (not recommended for production)',
+    },
+    
+    // Controller section
+    ControllerSection: { label: 'Controller Configuration (Optional)' },
+    ControllerURL: {
+      label: 'Controller URL',
+      description: 'URL of the Apache Pinot controller (optional, for metadata operations)',
+      placeholder: 'http://localhost:9000',
+    },
+    ControllerAuthType: {
+      label: 'Authentication Type',
+      description: 'Select the authentication method for the controller',
+    },
+    ControllerUsername: {
+      label: 'Username',
+      description: 'Username for controller basic authentication',
+      placeholder: 'Username',
+    },
+    ControllerPassword: {
+      label: 'Password',
+      description: 'Password for controller basic authentication',
+      placeholder: 'Password',
+    },
+    ControllerToken: {
+      label: 'Bearer Token',
+      description: 'Bearer token for controller authentication',
+      placeholder: 'Bearer token',
+    },
+    ControllerTlsSkipVerify: {
+      label: 'Skip TLS Verify (Controller)',
+      description: 'Skip TLS certificate verification for controller connections (not recommended for production)',
+    },
+    
+    // Auth options
+    AuthOptions: {
+      none: { label: 'No Authentication', value: 'none' },
+      basic: { label: 'Basic Authentication', value: 'basic' },
+      bearer: { label: 'Bearer Token', value: 'bearer' },
+    },
+  },
+};
+
+// Constants
+const FIELD_WIDTH = 60;
+
 const ConfigEditor = (props: any) => {
   const { options, onOptionsChange } = props;
   const { jsonData, secureJsonFields, secureJsonData } = options;
@@ -40,186 +117,31 @@ const ConfigEditor = (props: any) => {
   const [controllerOpen, setControllerOpen] = useState(false);
 
   const authTypeOptions: Array<SelectableValue<AuthType>> = [
-    { label: 'No Authentication', value: 'none' },
-    { label: 'Basic Authentication', value: 'basic' },
-    { label: 'Bearer Token', value: 'bearer' },
+    selectors.ConfigEditor.AuthOptions.none,
+    selectors.ConfigEditor.AuthOptions.basic,
+    selectors.ConfigEditor.AuthOptions.bearer,
   ];
 
-  const onBrokerUrlChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  // Common abstraction for option changes
+  const onOptionChange = <Key extends keyof Config, Value extends Config[Key]>(
+    option: Key,
+    value: Value
+  ) => {
     onOptionsChange({
       ...options,
-      jsonData: {
-        ...jsonData,
-        brokerUrl: event.target.value,
-      },
+      jsonData: { ...jsonData, [option]: value },
     });
   };
 
-  const onControllerUrlChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const onSecureOptionChange = <Key extends keyof SecureConfig, Value extends SecureConfig[Key]>(
+    option: Key,
+    value: Value,
+    set: boolean
+  ) => {
     onOptionsChange({
       ...options,
-      jsonData: {
-        ...jsonData,
-        controllerUrl: event.target.value,
-      },
-    });
-  };
-
-  // Broker Auth handlers
-  const onBrokerAuthTypeChange = (option: SelectableValue<AuthType>) => {
-    onOptionsChange({
-      ...options,
-      jsonData: {
-        ...jsonData,
-        brokerAuthType: option.value || 'none',
-      },
-    });
-  };
-
-  const onBrokerUsernameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    onOptionsChange({
-      ...options,
-      jsonData: {
-        ...jsonData,
-        brokerUsername: event.target.value,
-      },
-    });
-  };
-
-  const onBrokerPasswordChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    onOptionsChange({
-      ...options,
-      secureJsonData: {
-        ...secureJsonData,
-        brokerPassword: event.target.value,
-      },
-    });
-  };
-
-  const onBrokerPasswordReset = () => {
-    onOptionsChange({
-      ...options,
-      secureJsonFields: {
-        ...secureJsonFields,
-        brokerPassword: false,
-      },
-      secureJsonData: {
-        ...secureJsonData,
-        brokerPassword: '',
-      },
-    });
-  };
-
-  const onBrokerTokenChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    onOptionsChange({
-      ...options,
-      secureJsonData: {
-        ...secureJsonData,
-        brokerToken: event.target.value,
-      },
-    });
-  };
-
-  const onBrokerTokenReset = () => {
-    onOptionsChange({
-      ...options,
-      secureJsonFields: {
-        ...secureJsonFields,
-        brokerToken: false,
-      },
-      secureJsonData: {
-        ...secureJsonData,
-        brokerToken: '',
-      },
-    });
-  };
-
-  // Controller Auth handlers
-  const onControllerAuthTypeChange = (option: SelectableValue<AuthType>) => {
-    onOptionsChange({
-      ...options,
-      jsonData: {
-        ...jsonData,
-        controllerAuthType: option.value || 'none',
-      },
-    });
-  };
-
-  const onControllerUsernameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    onOptionsChange({
-      ...options,
-      jsonData: {
-        ...jsonData,
-        controllerUsername: event.target.value,
-      },
-    });
-  };
-
-  const onControllerPasswordChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    onOptionsChange({
-      ...options,
-      secureJsonData: {
-        ...secureJsonData,
-        controllerPassword: event.target.value,
-      },
-    });
-  };
-
-  const onControllerPasswordReset = () => {
-    onOptionsChange({
-      ...options,
-      secureJsonFields: {
-        ...secureJsonFields,
-        controllerPassword: false,
-      },
-      secureJsonData: {
-        ...secureJsonData,
-        controllerPassword: '',
-      },
-    });
-  };
-
-  const onControllerTokenChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    onOptionsChange({
-      ...options,
-      secureJsonData: {
-        ...secureJsonData,
-        controllerToken: event.target.value,
-      },
-    });
-  };
-
-  const onControllerTokenReset = () => {
-    onOptionsChange({
-      ...options,
-      secureJsonFields: {
-        ...secureJsonFields,
-        controllerToken: false,
-      },
-      secureJsonData: {
-        ...secureJsonData,
-        controllerToken: '',
-      },
-    });
-  };
-
-  const onBrokerTlsSkipVerifyChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    onOptionsChange({
-      ...options,
-      jsonData: {
-        ...jsonData,
-        brokerTlsSkipVerify: event.target.checked,
-      },
-    });
-  };
-
-  const onControllerTlsSkipVerifyChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    onOptionsChange({
-      ...options,
-      jsonData: {
-        ...jsonData,
-        controllerTlsSkipVerify: event.target.checked,
-      },
+      secureJsonData: { ...secureJsonData, [option]: value },
+      secureJsonFields: { ...secureJsonFields, [option]: set },
     });
   };
 
@@ -229,63 +151,66 @@ const ConfigEditor = (props: any) => {
 
   return (
     <>
-      <Alert title="Broker vs Controller Configuration" severity="info">
-        <p><strong>Broker-only mode:</strong> Only queries are supported. You can execute SQL queries but cannot retrieve table or schema metadata.</p>
-        <p><strong>Broker + Controller mode:</strong> Full functionality with query execution and metadata operations (listing tables, schemas, etc.). Recommended for production use.</p>
-      </Alert>
-
-      <Collapse label="Broker Configuration" isOpen={brokerOpen} onToggle={() => setBrokerOpen(!brokerOpen)}>
-        <FieldSet>
+      <Collapse
+        label={selectors.ConfigEditor.BrokerSection.label}
+        isOpen={brokerOpen}
+        onToggle={() => setBrokerOpen(!brokerOpen)}
+      >
+        <FieldSet style={{ marginInline: '10px' }}>
           <Field
-            label="Broker URL"
-            description="URL of the Apache Pinot broker (e.g., http://localhost:8099)"
+            horizontal={true}
+            label={selectors.ConfigEditor.BrokerURL.label}
+            description={selectors.ConfigEditor.BrokerURL.description}
             required
           >
             <Input
-              width={60}
+              width={FIELD_WIDTH}
               value={jsonData.brokerUrl || ''}
-              onChange={onBrokerUrlChange}
-              placeholder="http://localhost:8099"
+              onChange={(e) => onOptionChange('brokerUrl', e.currentTarget.value)}
+              placeholder={selectors.ConfigEditor.BrokerURL.placeholder}
             />
           </Field>
 
           <Field
-            label="Authentication Type"
-            description="Select the authentication method for the broker"
+            horizontal={true}
+            label={selectors.ConfigEditor.BrokerAuthType.label}
+            description={selectors.ConfigEditor.BrokerAuthType.description}
           >
             <Select
-              width={60}
+              width={FIELD_WIDTH}
               options={authTypeOptions}
               value={brokerAuthType}
-              onChange={onBrokerAuthTypeChange}
+              onChange={(v) => onOptionChange('brokerAuthType', v.value!)}
             />
           </Field>
 
           {brokerAuthType === 'basic' && (
             <>
               <Field
-                label="Username"
-                description="Username for broker basic authentication"
+                horizontal={true}
+                label={selectors.ConfigEditor.BrokerUsername.label}
+                description={selectors.ConfigEditor.BrokerUsername.description}
               >
                 <Input
-                  width={60}
+                  width={FIELD_WIDTH}
                   value={jsonData.brokerUsername || ''}
-                  onChange={onBrokerUsernameChange}
-                  placeholder="Username"
+                  onChange={(e) => onOptionChange('brokerUsername', e.currentTarget.value)}
+                  placeholder={selectors.ConfigEditor.BrokerUsername.placeholder}
                 />
               </Field>
 
               <Field
-                label="Password"
-                description="Password for broker basic authentication"
+                horizontal={true}
+                label={selectors.ConfigEditor.BrokerPassword.label}
+                description={selectors.ConfigEditor.BrokerPassword.description}
               >
                 <SecretInput
-                  width={60}
+                  width={secureJsonFields?.brokerPassword ? FIELD_WIDTH - 10 : FIELD_WIDTH}
                   value={secureJsonData?.brokerPassword || ''}
                   isConfigured={secureJsonFields?.brokerPassword}
-                  onChange={onBrokerPasswordChange}
-                  onReset={onBrokerPasswordReset}
-                  placeholder="Password"
+                  onChange={(e) => onSecureOptionChange('brokerPassword', e.currentTarget.value, false)}
+                  onReset={() => onSecureOptionChange('brokerPassword', '', true)}
+                  placeholder={selectors.ConfigEditor.BrokerPassword.placeholder}
                 />
               </Field>
             </>
@@ -293,94 +218,97 @@ const ConfigEditor = (props: any) => {
 
           {brokerAuthType === 'bearer' && (
             <Field
-              label="Bearer Token"
-              description="Bearer token for broker authentication"
+              horizontal={true}
+              label={selectors.ConfigEditor.BrokerToken.label}
+              description={selectors.ConfigEditor.BrokerToken.description}
             >
               <SecretInput
-                width={60}
+                width={secureJsonFields?.brokerToken ? FIELD_WIDTH - 10 : FIELD_WIDTH}
                 value={secureJsonData?.brokerToken || ''}
                 isConfigured={secureJsonFields?.brokerToken}
-                onChange={onBrokerTokenChange}
-                onReset={onBrokerTokenReset}
-                placeholder="Bearer token"
+                onChange={(e) => onSecureOptionChange('brokerToken', e.currentTarget.value, false)}
+                onReset={() => onSecureOptionChange('brokerToken', '', true)}
+                placeholder={selectors.ConfigEditor.BrokerToken.placeholder}
               />
             </Field>
           )}
 
-          <Field 
-            label="Skip TLS Verify (Broker)" 
-            description="Skip TLS certificate verification for broker connections (not recommended for production)"
+          <Field
+            horizontal={true}
+            label={selectors.ConfigEditor.BrokerTlsSkipVerify.label}
+            description={selectors.ConfigEditor.BrokerTlsSkipVerify.description}
           >
             <Input
               type="checkbox"
+              width={FIELD_WIDTH}
               checked={jsonData.brokerTlsSkipVerify || false}
-              onChange={onBrokerTlsSkipVerifyChange}
+              onChange={(e) => onOptionChange('brokerTlsSkipVerify', e.currentTarget.checked)}
             />
           </Field>
         </FieldSet>
       </Collapse>
 
-      <Collapse label="Controller Configuration (Optional)" isOpen={controllerOpen} onToggle={() => setControllerOpen(!controllerOpen)}>
-        <FieldSet>
-          <Alert title="Controller enables metadata operations" severity="info">
-            Configure the controller to enable metadata operations such as listing tables and schemas. Leave blank for broker-only (query-only) mode.
-          </Alert>
-
+      <Collapse
+        label={selectors.ConfigEditor.ControllerSection.label}
+        isOpen={controllerOpen}
+        onToggle={() => setControllerOpen(!controllerOpen)}
+      >
+        <FieldSet style={{ marginInline: '10px' }}>
           <Field
-            label="Controller URL"
-            description="URL of the Apache Pinot controller (optional, for metadata operations)"
+            horizontal={true}
+            label={selectors.ConfigEditor.ControllerURL.label}
+            description={selectors.ConfigEditor.ControllerURL.description}
           >
             <Input
-              width={60}
+              width={FIELD_WIDTH}
               value={jsonData.controllerUrl || ''}
-              onChange={onControllerUrlChange}
-              placeholder="http://localhost:9000"
+              onChange={(e) => onOptionChange('controllerUrl', e.currentTarget.value)}
+              placeholder={selectors.ConfigEditor.ControllerURL.placeholder}
             />
           </Field>
 
           {hasControllerUrl && (
             <>
-              <Alert title="Separate Controller Authentication" severity="info">
-                Configure separate authentication for the controller. This allows different security settings for query operations (broker) and metadata operations (controller).
-              </Alert>
-
               <Field
-                label="Authentication Type"
-                description="Select the authentication method for the controller"
+                horizontal={true}
+                label={selectors.ConfigEditor.ControllerAuthType.label}
+                description={selectors.ConfigEditor.ControllerAuthType.description}
               >
                 <Select
-                  width={60}
+                  width={FIELD_WIDTH}
                   options={authTypeOptions}
                   value={controllerAuthType}
-                  onChange={onControllerAuthTypeChange}
+                  onChange={(v) => onOptionChange('controllerAuthType', v.value!)}
                 />
               </Field>
 
               {controllerAuthType === 'basic' && (
                 <>
                   <Field
-                    label="Username"
-                    description="Username for controller basic authentication"
+                    horizontal={true}
+                    label={selectors.ConfigEditor.ControllerUsername.label}
+                    description={selectors.ConfigEditor.ControllerUsername.description}
                   >
                     <Input
-                      width={60}
+                      width={FIELD_WIDTH}
                       value={jsonData.controllerUsername || ''}
-                      onChange={onControllerUsernameChange}
-                      placeholder="Username"
+                      onChange={(e) => onOptionChange('controllerUsername', e.currentTarget.value)}
+                      placeholder={selectors.ConfigEditor.ControllerUsername.placeholder}
                     />
                   </Field>
 
                   <Field
-                    label="Password"
-                    description="Password for controller basic authentication"
+                    horizontal={true}
+                    label={selectors.ConfigEditor.ControllerPassword.label}
+                    description={selectors.ConfigEditor.ControllerPassword.description}
                   >
                     <SecretInput
-                      width={60}
+                      width={secureJsonFields?.controllerPassword ? FIELD_WIDTH - 10 : FIELD_WIDTH}
                       value={secureJsonData?.controllerPassword || ''}
                       isConfigured={secureJsonFields?.controllerPassword}
-                      onChange={onControllerPasswordChange}
-                      onReset={onControllerPasswordReset}
-                      placeholder="Password"
+                      onChange={(e) => onSecureOptionChange('controllerPassword', e.currentTarget.value, false)}
+                      onReset={() => onSecureOptionChange('controllerPassword', '', true)}
+                      placeholder={selectors.ConfigEditor.ControllerPassword.placeholder}
                     />
                   </Field>
                 </>
@@ -388,28 +316,31 @@ const ConfigEditor = (props: any) => {
 
               {controllerAuthType === 'bearer' && (
                 <Field
-                  label="Bearer Token"
-                  description="Bearer token for controller authentication"
+                  horizontal={true}
+                  label={selectors.ConfigEditor.ControllerToken.label}
+                  description={selectors.ConfigEditor.ControllerToken.description}
                 >
                   <SecretInput
-                    width={60}
+                    width={secureJsonFields?.controllerToken ? FIELD_WIDTH - 10 : FIELD_WIDTH}
                     value={secureJsonData?.controllerToken || ''}
                     isConfigured={secureJsonFields?.controllerToken}
-                    onChange={onControllerTokenChange}
-                    onReset={onControllerTokenReset}
-                    placeholder="Bearer token"
+                    onChange={(e) => onSecureOptionChange('controllerToken', e.currentTarget.value, false)}
+                    onReset={() => onSecureOptionChange('controllerToken', '', true)}
+                    placeholder={selectors.ConfigEditor.ControllerToken.placeholder}
                   />
                 </Field>
               )}
 
-              <Field 
-                label="Skip TLS Verify (Controller)" 
-                description="Skip TLS certificate verification for controller connections (not recommended for production)"
+              <Field
+                horizontal={true}
+                label={selectors.ConfigEditor.ControllerTlsSkipVerify.label}
+                description={selectors.ConfigEditor.ControllerTlsSkipVerify.description}
               >
                 <Input
                   type="checkbox"
+                  width={FIELD_WIDTH}
                   checked={jsonData.controllerTlsSkipVerify || false}
-                  onChange={onControllerTlsSkipVerifyChange}
+                  onChange={(e) => onOptionChange('controllerTlsSkipVerify', e.currentTarget.checked)}
                 />
               </Field>
             </>
