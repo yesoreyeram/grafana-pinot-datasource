@@ -100,9 +100,9 @@ const selectors = {
     
     // Auth options
     AuthOptions: {
-      none: { label: 'No Authentication', value: 'none' },
-      basic: { label: 'Basic Authentication', value: 'basic' },
-      bearer: { label: 'Bearer Token', value: 'bearer' },
+      none: { label: 'No Authentication', value: 'none' as AuthType },
+      basic: { label: 'Basic Authentication', value: 'basic' as AuthType },
+      bearer: { label: 'Bearer Token', value: 'bearer' as AuthType },
     },
   },
 };
