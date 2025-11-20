@@ -44,6 +44,24 @@ type SecureDataSourceConfig struct {
 	ControllerToken    string `json:"controllerToken"`
 }
 
+type HTTPClientConfig struct {
+	URL        string
+	AuthType   AuthType
+	Username   string
+	Password   string
+	Token      string
+	HTTPClient *http.Client
+}
+
+type HTTPClient struct {
+	url        string
+	authType   AuthType
+	username   string
+	password   string
+	token      string
+	httpClient *http.Client
+}
+
 type PinotClientOptions struct {
 	BrokerUrl          string
 	ControllerUrl      string
@@ -59,69 +77,36 @@ type PinotClientOptions struct {
 }
 
 type PinotClient struct {
-	brokerUrl          string
-	controllerUrl      string
-	brokerAuthType     AuthType
-	brokerUsername     string
-	brokerPassword     string
-	brokerToken        string
-	controllerAuthType AuthType
-	controllerUsername string
-	controllerPassword string
-	controllerToken    string
-	httpClient         *http.Client
+	brokerClient     *HTTPClient
+	controllerClient *HTTPClient
 }
 
 type DataSource struct {
 	client *PinotClient
 }
 
-// New creates a new Pinot client with the given options
-func New(opts PinotClientOptions) (*PinotClient, error) {
-	if opts.BrokerUrl == "" {
-		return nil, fmt.Errorf("broker URL is required")
+// NewHTTPClient creates a new HTTP client with the given configuration
+func NewHTTPClient(config HTTPClientConfig) *HTTPClient {
+	return &HTTPClient{
+		url:        strings.TrimSuffix(config.URL, "/"),
+		authType:   config.AuthType,
+		username:   config.Username,
+		password:   config.Password,
+		token:      config.Token,
+		httpClient: config.HTTPClient,
 	}
-
-	return &PinotClient{
-		brokerUrl:          strings.TrimSuffix(opts.BrokerUrl, "/"),
-		controllerUrl:      strings.TrimSuffix(opts.ControllerUrl, "/"),
-		brokerAuthType:     opts.BrokerAuthType,
-		brokerUsername:     opts.BrokerUsername,
-		brokerPassword:     opts.BrokerPassword,
-		brokerToken:        opts.BrokerToken,
-		controllerAuthType: opts.ControllerAuthType,
-		controllerUsername: opts.ControllerUsername,
-		controllerPassword: opts.ControllerPassword,
-		controllerToken:    opts.ControllerToken,
-		httpClient:         opts.HTTPClient,
-	}, nil
 }
 
-// addAuth adds authentication headers to the HTTP request based on auth type and target
-func (c *PinotClient) addAuth(req *http.Request, target string) {
-	var authType AuthType
-	var username, password, token string
-
-	if target == "broker" {
-		authType = c.brokerAuthType
-		username = c.brokerUsername
-		password = c.brokerPassword
-		token = c.brokerToken
-	} else if target == "controller" {
-		authType = c.controllerAuthType
-		username = c.controllerUsername
-		password = c.controllerPassword
-		token = c.controllerToken
-	}
-
-	switch authType {
+// addAuth adds authentication headers to the HTTP request
+func (c *HTTPClient) addAuth(req *http.Request) {
+	switch c.authType {
 	case AuthTypeBasic:
-		if username != "" && password != "" {
-			req.SetBasicAuth(username, password)
+		if c.username != "" && c.password != "" {
+			req.SetBasicAuth(c.username, c.password)
 		}
 	case AuthTypeBearer:
-		if token != "" {
-			req.Header.Set("Authorization", "Bearer "+token)
+		if c.token != "" {
+			req.Header.Set("Authorization", "Bearer "+c.token)
 		}
 	case AuthTypeNone:
 		// No authentication
@@ -129,7 +114,8 @@ func (c *PinotClient) addAuth(req *http.Request, target string) {
 }
 
 // doRequest performs an HTTP request with authentication
-func (c *PinotClient) doRequest(ctx context.Context, method, url, target string, body io.Reader) (*http.Response, error) {
+func (c *HTTPClient) doRequest(ctx context.Context, method, path string, body io.Reader) (*http.Response, error) {
+	url := c.url + path
 	req, err := http.NewRequestWithContext(ctx, method, url, body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
@@ -139,7 +125,7 @@ func (c *PinotClient) doRequest(ctx context.Context, method, url, target string,
 		req.Header.Set("Content-Type", "application/json")
 	}
 
-	c.addAuth(req, target)
+	c.addAuth(req)
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -149,11 +135,42 @@ func (c *PinotClient) doRequest(ctx context.Context, method, url, target string,
 	return resp, nil
 }
 
+// New creates a new Pinot client with the given options
+func New(opts PinotClientOptions) (*PinotClient, error) {
+	if opts.BrokerUrl == "" {
+		return nil, fmt.Errorf("broker URL is required")
+	}
+
+	brokerClient := NewHTTPClient(HTTPClientConfig{
+		URL:        opts.BrokerUrl,
+		AuthType:   opts.BrokerAuthType,
+		Username:   opts.BrokerUsername,
+		Password:   opts.BrokerPassword,
+		Token:      opts.BrokerToken,
+		HTTPClient: opts.HTTPClient,
+	})
+
+	var controllerClient *HTTPClient
+	if opts.ControllerUrl != "" {
+		controllerClient = NewHTTPClient(HTTPClientConfig{
+			URL:        opts.ControllerUrl,
+			AuthType:   opts.ControllerAuthType,
+			Username:   opts.ControllerUsername,
+			Password:   opts.ControllerPassword,
+			Token:      opts.ControllerToken,
+			HTTPClient: opts.HTTPClient,
+		})
+	}
+
+	return &PinotClient{
+		brokerClient:     brokerClient,
+		controllerClient: controllerClient,
+	}, nil
+}
+
 // Health checks the health of the Pinot broker
 func (c *PinotClient) Health(ctx context.Context) error {
-	healthUrl := c.brokerUrl + "/health"
-
-	resp, err := c.doRequest(ctx, "GET", healthUrl, "broker", nil)
+	resp, err := c.brokerClient.doRequest(ctx, "GET", "/health", nil)
 	if err != nil {
 		return fmt.Errorf("failed to connect to Pinot broker: %w", err)
 	}
@@ -169,10 +186,9 @@ func (c *PinotClient) Health(ctx context.Context) error {
 
 // Query executes a SQL query against Pinot
 func (c *PinotClient) Query(ctx context.Context, sql string) (*http.Response, error) {
-	queryUrl := c.brokerUrl + "/query/sql"
 	queryPayload := fmt.Sprintf(`{"sql": "%s"}`, sql)
 
-	resp, err := c.doRequest(ctx, "POST", queryUrl, "broker", strings.NewReader(queryPayload))
+	resp, err := c.brokerClient.doRequest(ctx, "POST", "/query/sql", strings.NewReader(queryPayload))
 	if err != nil {
 		return nil, err
 	}
@@ -192,13 +208,11 @@ type TablesResponse struct {
 
 // Tables retrieves the list of tables from Pinot controller
 func (c *PinotClient) Tables(ctx context.Context) ([]string, error) {
-	if c.controllerUrl == "" {
+	if c.controllerClient == nil {
 		return nil, fmt.Errorf("controller URL is required to list tables")
 	}
 
-	tablesUrl := c.controllerUrl + "/tables"
-
-	resp, err := c.doRequest(ctx, "GET", tablesUrl, "controller", nil)
+	resp, err := c.controllerClient.doRequest(ctx, "GET", "/tables", nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to Pinot controller: %w", err)
 	}
@@ -252,8 +266,8 @@ func (ds *DataSource) CheckHealth(ctx context.Context, req *backend.CheckHealthR
 	resp.Body.Close()
 	healthMessages = append(healthMessages, "✓ Broker query endpoint verified")
 
-	// Check controller if URL is provided
-	if ds.client.controllerUrl != "" {
+	// Check controller if client is available
+	if ds.client.controllerClient != nil {
 		tables, err := ds.client.Tables(ctx)
 		if err != nil {
 			return &backend.CheckHealthResult{
