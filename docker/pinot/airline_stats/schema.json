@@ -16,7 +16,7 @@
     {
       "name": "eventTime",
       "dataType": "LONG",
-      "format": "1:HOURS:EPOCH",
+      "format": "1:MILLISECONDS:EPOCH",
       "granularity": "1:HOURS"
     }
   ]
