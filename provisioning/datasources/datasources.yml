@@ -5,4 +5,6 @@ datasources:
     type: 'yesoreyeram-pinot-datasource'
     uid: apache_pinot_default
     jsonData:
+      brokerUrl: 'http://pinot-broker:8099'
+      controllerUrl: 'http://pinot-controller:9000'
     secureJsonData:
