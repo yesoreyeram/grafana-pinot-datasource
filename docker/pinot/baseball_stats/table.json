@@ -1,0 +1,25 @@
+{
+  "tableName": "baseballStats",
+  "tableType": "OFFLINE",
+  "segmentsConfig": {
+    "timeColumnName": "eventTime",
+    "timeType": "MILLISECONDS",
+    "schemaName": "baseballStats",
+    "replication": "1"
+  },
+  "tableIndexConfig": {
+    "loadMode": "MMAP",
+    "invertedIndexColumns": ["PlayerName", "Team"]
+  },
+  "ingestionConfig": {
+    "batchIngestionConfig": {
+      "segmentIngestionType": "APPEND",
+      "segmentIngestionFrequency": "DAILY"
+    }
+  },
+  "tenants": {
+    "broker": "DefaultTenant",
+    "server": "DefaultTenant"
+  },
+  "metadata": {}
+}

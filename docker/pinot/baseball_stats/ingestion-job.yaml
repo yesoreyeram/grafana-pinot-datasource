@@ -1,0 +1,17 @@
+executionFrameworkSpec:
+  name: standalone
+jobType: SegmentCreationAndUpload
+inputDirURI: 'file:///pinot-samples/baseball_stats/data'
+includeFileNamePattern: 'glob:**/*.json'
+outputDirURI: 'file:///tmp/pinot-baseballStats'
+overwriteOutput: true
+segmentCreationJobSpec:
+  inputFormat: json
+  schemaFile: 'file:///pinot-samples/baseball_stats/schema.json'
+  tableConfigFile: 'file:///pinot-samples/baseball_stats/table.json'
+  recordReaderSpec:
+    className: org.apache.pinot.plugin.inputformat.json.JSONRecordReader
+    configClassName: org.apache.pinot.plugin.inputformat.json.JSONRecordReaderConfig
+segmentPushJobSpec:
+  tableName: baseballStats
+  controllerURI: 'http://pinot-controller:9000'

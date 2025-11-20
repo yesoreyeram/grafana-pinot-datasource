@@ -1,0 +1,25 @@
+{
+  "schemaName": "ecommerce_products",
+  "dimensionFieldSpecs": [
+    { "name": "product_id", "dataType": "STRING" },
+    { "name": "product_name", "dataType": "STRING" },
+    { "name": "category", "dataType": "STRING" },
+    { "name": "brand", "dataType": "STRING" },
+    { "name": "sku", "dataType": "STRING" }
+  ],
+  "metricFieldSpecs": [
+    { "name": "price", "dataType": "DOUBLE" },
+    { "name": "cost", "dataType": "DOUBLE" },
+    { "name": "stock_quantity", "dataType": "INT" },
+    { "name": "views_count", "dataType": "INT" },
+    { "name": "sales_count", "dataType": "INT" }
+  ],
+  "dateTimeFieldSpecs": [
+    {
+      "name": "created_timestamp",
+      "dataType": "LONG",
+      "format": "1:MILLISECONDS:EPOCH",
+      "granularity": "1:DAYS"
+    }
+  ]
+}

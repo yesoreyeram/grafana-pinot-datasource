@@ -1,0 +1,25 @@
+{
+  "schemaName": "ecommerce_orders",
+  "dimensionFieldSpecs": [
+    { "name": "order_id", "dataType": "STRING" },
+    { "name": "customer_id", "dataType": "STRING" },
+    { "name": "status", "dataType": "STRING" },
+    { "name": "payment_method", "dataType": "STRING" },
+    { "name": "shipping_country", "dataType": "STRING" },
+    { "name": "shipping_city", "dataType": "STRING" }
+  ],
+  "metricFieldSpecs": [
+    { "name": "total_amount", "dataType": "DOUBLE" },
+    { "name": "tax_amount", "dataType": "DOUBLE" },
+    { "name": "shipping_cost", "dataType": "DOUBLE" },
+    { "name": "discount_amount", "dataType": "DOUBLE" }
+  ],
+  "dateTimeFieldSpecs": [
+    {
+      "name": "order_timestamp",
+      "dataType": "LONG",
+      "format": "1:MILLISECONDS:EPOCH",
+      "granularity": "1:HOURS"
+    }
+  ]
+}

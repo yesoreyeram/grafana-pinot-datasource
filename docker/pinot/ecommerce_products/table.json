@@ -1,0 +1,25 @@
+{
+  "tableName": "ecommerce_products",
+  "tableType": "OFFLINE",
+  "segmentsConfig": {
+    "timeColumnName": "created_timestamp",
+    "timeType": "MILLISECONDS",
+    "schemaName": "ecommerce_products",
+    "replication": "1"
+  },
+  "tableIndexConfig": {
+    "loadMode": "MMAP",
+    "invertedIndexColumns": ["category", "brand", "product_name"]
+  },
+  "ingestionConfig": {
+    "batchIngestionConfig": {
+      "segmentIngestionType": "APPEND",
+      "segmentIngestionFrequency": "DAILY"
+    }
+  },
+  "tenants": {
+    "broker": "DefaultTenant",
+    "server": "DefaultTenant"
+  },
+  "metadata": {}
+}

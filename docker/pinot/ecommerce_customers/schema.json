@@ -1,0 +1,25 @@
+{
+  "schemaName": "ecommerce_customers",
+  "dimensionFieldSpecs": [
+    { "name": "customer_id", "dataType": "STRING" },
+    { "name": "email", "dataType": "STRING" },
+    { "name": "first_name", "dataType": "STRING" },
+    { "name": "last_name", "dataType": "STRING" },
+    { "name": "country", "dataType": "STRING" },
+    { "name": "city", "dataType": "STRING" },
+    { "name": "customer_segment", "dataType": "STRING" }
+  ],
+  "metricFieldSpecs": [
+    { "name": "total_orders", "dataType": "INT" },
+    { "name": "total_spent", "dataType": "DOUBLE" },
+    { "name": "loyalty_points", "dataType": "INT" }
+  ],
+  "dateTimeFieldSpecs": [
+    {
+      "name": "registered_timestamp",
+      "dataType": "LONG",
+      "format": "1:MILLISECONDS:EPOCH",
+      "granularity": "1:DAYS"
+    }
+  ]
+}

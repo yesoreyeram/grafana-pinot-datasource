@@ -1,0 +1,25 @@
+{
+  "tableName": "ecommerce_customers",
+  "tableType": "OFFLINE",
+  "segmentsConfig": {
+    "timeColumnName": "registered_timestamp",
+    "timeType": "MILLISECONDS",
+    "schemaName": "ecommerce_customers",
+    "replication": "1"
+  },
+  "tableIndexConfig": {
+    "loadMode": "MMAP",
+    "invertedIndexColumns": ["country", "city", "customer_segment", "email"]
+  },
+  "ingestionConfig": {
+    "batchIngestionConfig": {
+      "segmentIngestionType": "APPEND",
+      "segmentIngestionFrequency": "DAILY"
+    }
+  },
+  "tenants": {
+    "broker": "DefaultTenant",
+    "server": "DefaultTenant"
+  },
+  "metadata": {}
+}
