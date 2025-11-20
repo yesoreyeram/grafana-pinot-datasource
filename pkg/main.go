@@ -40,19 +40,18 @@ const (
 // TYPES - Configuration
 // ============================================================================
 
+// HTTPClientConfig holds configuration for an HTTP client endpoint
+type HTTPClientConfig struct {
+	Url           string   `json:"url"`
+	AuthType      AuthType `json:"authType"`
+	TlsSkipVerify bool     `json:"tlsSkipVerify"`
+	UserName      string   `json:"userName"`
+}
+
 // DataSourceConfig holds the public configuration for the datasource
 type DataSourceConfig struct {
-	// Broker configuration
-	BrokerUrl           string   `json:"brokerUrl"`
-	BrokerAuthType      AuthType `json:"brokerAuthType"`
-	BrokerUsername      string   `json:"brokerUsername"`
-	BrokerTlsSkipVerify bool     `json:"brokerTlsSkipVerify"`
-
-	// Controller configuration
-	ControllerUrl           string   `json:"controllerUrl"`
-	ControllerAuthType      AuthType `json:"controllerAuthType"`
-	ControllerUsername      string   `json:"controllerUsername"`
-	ControllerTlsSkipVerify bool     `json:"controllerTlsSkipVerify"`
+	Broker     *HTTPClientConfig `json:"broker"`
+	Controller *HTTPClientConfig `json:"controller"`
 }
 
 // SecureDataSourceConfig holds the secure/encrypted configuration for the datasource
@@ -67,11 +66,11 @@ type SecureDataSourceConfig struct {
 }
 
 // ============================================================================
-// TYPES - HTTP Client
+// TYPES - HTTP Client (Internal)
 // ============================================================================
 
-// HTTPClientConfig holds the configuration for creating an HTTP client
-type HTTPClientConfig struct {
+// HTTPClientBuildConfig holds the configuration for creating an HTTP client internally
+type HTTPClientBuildConfig struct {
 	URL           string
 	AuthType      AuthType
 	Username      string
@@ -142,7 +141,7 @@ type DataSource struct {
 // ============================================================================
 
 // NewHTTPClient creates a new HTTP client with the given configuration
-func NewHTTPClient(config HTTPClientConfig) *HTTPClient {
+func NewHTTPClient(config HTTPClientBuildConfig) *HTTPClient {
 	// Set default timeout if not specified
 	timeout := config.Timeout
 	if timeout == 0 {
@@ -230,7 +229,7 @@ func New(opts PinotClientOptions) (*PinotClient, error) {
 	}
 
 	// Create broker HTTP client with separate TLS configuration
-	brokerClient := NewHTTPClient(HTTPClientConfig{
+	brokerClient := NewHTTPClient(HTTPClientBuildConfig{
 		URL:           opts.BrokerUrl,
 		AuthType:      opts.BrokerAuthType,
 		Username:      opts.BrokerUsername,
@@ -243,7 +242,7 @@ func New(opts PinotClientOptions) (*PinotClient, error) {
 	// Create controller HTTP client with separate TLS configuration (if URL provided)
 	var controllerClient *HTTPClient
 	if opts.ControllerUrl != "" {
-		controllerClient = NewHTTPClient(HTTPClientConfig{
+		controllerClient = NewHTTPClient(HTTPClientBuildConfig{
 			URL:           opts.ControllerUrl,
 			AuthType:      opts.ControllerAuthType,
 			Username:      opts.ControllerUsername,
@@ -474,24 +473,48 @@ func newDataSourceInstance(ctx context.Context, settings backend.DataSourceInsta
 		}
 	}
 
+	// Extract broker config with defaults
+	brokerUrl := ""
+	brokerAuthType := AuthTypeNone
+	brokerUsername := ""
+	brokerTlsSkipVerify := false
+	if config.Broker != nil {
+		brokerUrl = config.Broker.Url
+		brokerAuthType = config.Broker.AuthType
+		brokerUsername = config.Broker.UserName
+		brokerTlsSkipVerify = config.Broker.TlsSkipVerify
+	}
+
+	// Extract controller config with defaults
+	controllerUrl := ""
+	controllerAuthType := AuthTypeNone
+	controllerUsername := ""
+	controllerTlsSkipVerify := false
+	if config.Controller != nil {
+		controllerUrl = config.Controller.Url
+		controllerAuthType = config.Controller.AuthType
+		controllerUsername = config.Controller.UserName
+		controllerTlsSkipVerify = config.Controller.TlsSkipVerify
+	}
+
 	// Create Pinot client with separate configurations for broker and controller
 	client, err := New(PinotClientOptions{
 		// Broker configuration
-		BrokerUrl:           config.BrokerUrl,
-		BrokerAuthType:      config.BrokerAuthType,
-		BrokerUsername:      config.BrokerUsername,
+		BrokerUrl:           brokerUrl,
+		BrokerAuthType:      brokerAuthType,
+		BrokerUsername:      brokerUsername,
 		BrokerPassword:      secureConfig.BrokerPassword,
 		BrokerToken:         secureConfig.BrokerToken,
-		BrokerTlsSkipVerify: config.BrokerTlsSkipVerify,
+		BrokerTlsSkipVerify: brokerTlsSkipVerify,
 		BrokerTimeout:       30 * time.Second,
 
 		// Controller configuration
-		ControllerUrl:           config.ControllerUrl,
-		ControllerAuthType:      config.ControllerAuthType,
-		ControllerUsername:      config.ControllerUsername,
+		ControllerUrl:           controllerUrl,
+		ControllerAuthType:      controllerAuthType,
+		ControllerUsername:      controllerUsername,
 		ControllerPassword:      secureConfig.ControllerPassword,
 		ControllerToken:         secureConfig.ControllerToken,
-		ControllerTlsSkipVerify: config.ControllerTlsSkipVerify,
+		ControllerTlsSkipVerify: controllerTlsSkipVerify,
 		ControllerTimeout:       30 * time.Second,
 	})
 

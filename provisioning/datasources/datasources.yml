@@ -6,9 +6,10 @@ datasources:
     type: 'yesoreyeram-pinot-datasource'
     uid: pinot_broker_only_no_auth
     jsonData:
-      brokerUrl: 'http://pinot-broker:8099'
-      brokerAuthType: 'none'
-      brokerTlsSkipVerify: false
+      broker:
+        url: 'http://pinot-broker:8099'
+        authType: 'none'
+        tlsSkipVerify: false
     secureJsonData:
 
   # Broker + Controller mode with no authentication
@@ -17,12 +18,14 @@ datasources:
     uid: pinot_full_no_auth
     isDefault: true
     jsonData:
-      brokerUrl: 'http://pinot-broker:8099'
-      controllerUrl: 'http://pinot-controller:9000'
-      brokerAuthType: 'none'
-      controllerAuthType: 'none'
-      brokerTlsSkipVerify: false
-      controllerTlsSkipVerify: false
+      broker:
+        url: 'http://pinot-broker:8099'
+        authType: 'none'
+        tlsSkipVerify: false
+      controller:
+        url: 'http://pinot-controller:9000'
+        authType: 'none'
+        tlsSkipVerify: false
     secureJsonData:
 
   # Broker-only mode with basic authentication
@@ -30,10 +33,11 @@ datasources:
     type: 'yesoreyeram-pinot-datasource'
     uid: pinot_broker_only_basic_auth
     jsonData:
-      brokerUrl: 'http://pinot-broker:8099'
-      brokerAuthType: 'basic'
-      brokerUsername: 'broker_user'
-      brokerTlsSkipVerify: false
+      broker:
+        url: 'http://pinot-broker:8099'
+        authType: 'basic'
+        userName: 'broker_user'
+        tlsSkipVerify: false
     secureJsonData:
       brokerPassword: 'broker_password'
 
@@ -42,14 +46,16 @@ datasources:
     type: 'yesoreyeram-pinot-datasource'
     uid: pinot_full_same_basic_auth
     jsonData:
-      brokerUrl: 'http://pinot-broker:8099'
-      controllerUrl: 'http://pinot-controller:9000'
-      brokerAuthType: 'basic'
-      brokerUsername: 'pinot_user'
-      controllerAuthType: 'basic'
-      controllerUsername: 'pinot_user'
-      brokerTlsSkipVerify: false
-      controllerTlsSkipVerify: false
+      broker:
+        url: 'http://pinot-broker:8099'
+        authType: 'basic'
+        userName: 'pinot_user'
+        tlsSkipVerify: false
+      controller:
+        url: 'http://pinot-controller:9000'
+        authType: 'basic'
+        userName: 'pinot_user'
+        tlsSkipVerify: false
     secureJsonData:
       brokerPassword: 'pinot_password'
       controllerPassword: 'pinot_password'
@@ -59,13 +65,15 @@ datasources:
     type: 'yesoreyeram-pinot-datasource'
     uid: pinot_full_different_auth
     jsonData:
-      brokerUrl: 'http://pinot-broker:8099'
-      controllerUrl: 'http://pinot-controller:9000'
-      brokerAuthType: 'basic'
-      brokerUsername: 'broker_user'
-      controllerAuthType: 'bearer'
-      brokerTlsSkipVerify: false
-      controllerTlsSkipVerify: true
+      broker:
+        url: 'http://pinot-broker:8099'
+        authType: 'basic'
+        userName: 'broker_user'
+        tlsSkipVerify: false
+      controller:
+        url: 'http://pinot-controller:9000'
+        authType: 'bearer'
+        tlsSkipVerify: true
     secureJsonData:
       brokerPassword: 'broker_password'
       controllerToken: 'controller_bearer_token'

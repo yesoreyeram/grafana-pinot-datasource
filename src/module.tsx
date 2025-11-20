@@ -6,15 +6,16 @@ import { Field, SecretInput, Input, FieldSet, Select, Collapse } from '@grafana/
 
 type AuthType = 'none' | 'basic' | 'bearer';
 
+type HTTPClient = {
+  url?: string;
+  authType?: AuthType;
+  tlsSkipVerify?: boolean;
+  userName?: string;
+};
+
 type Config = {
-  brokerUrl?: string;
-  controllerUrl?: string;
-  brokerAuthType?: AuthType;
-  brokerUsername?: string;
-  brokerTlsSkipVerify?: boolean;
-  controllerAuthType?: AuthType;
-  controllerUsername?: string;
-  controllerTlsSkipVerify?: boolean;
+  broker?: HTTPClient;
+  controller?: HTTPClient;
 } & DataSourceJsonData;
 
 type SecureConfig = {
@@ -122,17 +123,29 @@ const ConfigEditor = (props: any) => {
     selectors.ConfigEditor.AuthOptions.bearer,
   ];
 
-  // Common abstraction for option changes
-  const onOptionChange = <Key extends keyof Config, Value extends Config[Key]>(
-    option: Key,
-    value: Value
-  ) => {
+  // Helper to update broker config
+  const onBrokerChange = <Key extends keyof HTTPClient>(key: Key, value: HTTPClient[Key]) => {
     onOptionsChange({
       ...options,
-      jsonData: { ...jsonData, [option]: value },
+      jsonData: {
+        ...jsonData,
+        broker: { ...jsonData.broker, [key]: value },
+      },
     });
   };
 
+  // Helper to update controller config
+  const onControllerChange = <Key extends keyof HTTPClient>(key: Key, value: HTTPClient[Key]) => {
+    onOptionsChange({
+      ...options,
+      jsonData: {
+        ...jsonData,
+        controller: { ...jsonData.controller, [key]: value },
+      },
+    });
+  };
+
+  // Helper for secure options
   const onSecureOptionChange = <Key extends keyof SecureConfig, Value extends SecureConfig[Key]>(
     option: Key,
     value: Value,
@@ -145,9 +158,11 @@ const ConfigEditor = (props: any) => {
     });
   };
 
-  const brokerAuthType = jsonData.brokerAuthType || 'none';
-  const controllerAuthType = jsonData.controllerAuthType || 'none';
-  const hasControllerUrl = jsonData.controllerUrl && jsonData.controllerUrl.trim() !== '';
+  const broker = jsonData.broker || {};
+  const controller = jsonData.controller || {};
+  const brokerAuthType = broker.authType || 'none';
+  const controllerAuthType = controller.authType || 'none';
+  const hasControllerUrl = controller.url && controller.url.trim() !== '';
 
   return (
     <>
@@ -165,8 +180,8 @@ const ConfigEditor = (props: any) => {
           >
             <Input
               width={FIELD_WIDTH}
-              value={jsonData.brokerUrl || ''}
-              onChange={(e) => onOptionChange('brokerUrl', e.currentTarget.value)}
+              value={broker.url || ''}
+              onChange={(e) => onBrokerChange('url', e.currentTarget.value)}
               placeholder={selectors.ConfigEditor.BrokerURL.placeholder}
             />
           </Field>
@@ -180,7 +195,7 @@ const ConfigEditor = (props: any) => {
               width={FIELD_WIDTH}
               options={authTypeOptions}
               value={brokerAuthType}
-              onChange={(v) => onOptionChange('brokerAuthType', v.value!)}
+              onChange={(v) => onBrokerChange('authType', v.value!)}
             />
           </Field>
 
@@ -193,8 +208,8 @@ const ConfigEditor = (props: any) => {
               >
                 <Input
                   width={FIELD_WIDTH}
-                  value={jsonData.brokerUsername || ''}
-                  onChange={(e) => onOptionChange('brokerUsername', e.currentTarget.value)}
+                  value={broker.userName || ''}
+                  onChange={(e) => onBrokerChange('userName', e.currentTarget.value)}
                   placeholder={selectors.ConfigEditor.BrokerUsername.placeholder}
                 />
               </Field>
@@ -241,8 +256,8 @@ const ConfigEditor = (props: any) => {
             <Input
               type="checkbox"
               width={FIELD_WIDTH}
-              checked={jsonData.brokerTlsSkipVerify || false}
-              onChange={(e) => onOptionChange('brokerTlsSkipVerify', e.currentTarget.checked)}
+              checked={broker.tlsSkipVerify || false}
+              onChange={(e) => onBrokerChange('tlsSkipVerify', e.currentTarget.checked)}
             />
           </Field>
         </FieldSet>
@@ -261,8 +276,8 @@ const ConfigEditor = (props: any) => {
           >
             <Input
               width={FIELD_WIDTH}
-              value={jsonData.controllerUrl || ''}
-              onChange={(e) => onOptionChange('controllerUrl', e.currentTarget.value)}
+              value={controller.url || ''}
+              onChange={(e) => onControllerChange('url', e.currentTarget.value)}
               placeholder={selectors.ConfigEditor.ControllerURL.placeholder}
             />
           </Field>
@@ -278,7 +293,7 @@ const ConfigEditor = (props: any) => {
                   width={FIELD_WIDTH}
                   options={authTypeOptions}
                   value={controllerAuthType}
-                  onChange={(v) => onOptionChange('controllerAuthType', v.value!)}
+                  onChange={(v) => onControllerChange('authType', v.value!)}
                 />
               </Field>
 
@@ -291,8 +306,8 @@ const ConfigEditor = (props: any) => {
                   >
                     <Input
                       width={FIELD_WIDTH}
-                      value={jsonData.controllerUsername || ''}
-                      onChange={(e) => onOptionChange('controllerUsername', e.currentTarget.value)}
+                      value={controller.userName || ''}
+                      onChange={(e) => onControllerChange('userName', e.currentTarget.value)}
                       placeholder={selectors.ConfigEditor.ControllerUsername.placeholder}
                     />
                   </Field>
@@ -339,8 +354,8 @@ const ConfigEditor = (props: any) => {
                 <Input
                   type="checkbox"
                   width={FIELD_WIDTH}
-                  checked={jsonData.controllerTlsSkipVerify || false}
-                  onChange={(e) => onOptionChange('controllerTlsSkipVerify', e.currentTarget.checked)}
+                  checked={controller.tlsSkipVerify || false}
+                  onChange={(e) => onControllerChange('tlsSkipVerify', e.currentTarget.checked)}
                 />
               </Field>
             </>
