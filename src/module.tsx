@@ -1,19 +1,22 @@
 import React from 'react';
-import { DataSourcePlugin, DataSourceJsonData, DataSourceInstanceSettings } from '@grafana/data';
+import { DataSourcePlugin, DataSourceJsonData, DataSourceInstanceSettings, SelectableValue } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
 import { DataSourceWithBackend } from '@grafana/runtime';
-import { Field, SecretInput, Input, FieldSet } from '@grafana/ui';
+import { Field, SecretInput, Input, FieldSet, Select } from '@grafana/ui';
+
+type AuthType = 'none' | 'basic' | 'bearer';
 
 type Config = {
   brokerUrl?: string;
   controllerUrl?: string;
-  useBasicAuth?: boolean;
+  authType?: AuthType;
+  username?: string;
   tlsSkipVerify?: boolean;
 } & DataSourceJsonData;
 
 type SecureConfig = {
-  basicAuthPassword?: string;
-  bearerToken?: string;
+  password?: string;
+  token?: string;
 };
 
 type Query = {} & DataQuery;
@@ -27,6 +30,12 @@ class DataSource extends DataSourceWithBackend<Query, Config> {
 const ConfigEditor = (props: any) => {
   const { options, onOptionsChange } = props;
   const { jsonData, secureJsonFields, secureJsonData } = options;
+
+  const authTypeOptions: Array<SelectableValue<AuthType>> = [
+    { label: 'No Authentication', value: 'none' },
+    { label: 'Basic Authentication', value: 'basic' },
+    { label: 'Bearer Token', value: 'bearer' },
+  ];
 
   const onBrokerUrlChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     onOptionsChange({
@@ -48,50 +57,70 @@ const ConfigEditor = (props: any) => {
     });
   };
 
-  const onBasicAuthPasswordChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const onAuthTypeChange = (option: SelectableValue<AuthType>) => {
     onOptionsChange({
       ...options,
-      secureJsonData: {
-        ...secureJsonData,
-        basicAuthPassword: event.target.value,
+      jsonData: {
+        ...jsonData,
+        authType: option.value || 'none',
       },
     });
   };
 
-  const onBasicAuthPasswordReset = () => {
+  const onUsernameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    onOptionsChange({
+      ...options,
+      jsonData: {
+        ...jsonData,
+        username: event.target.value,
+      },
+    });
+  };
+
+  const onPasswordChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    onOptionsChange({
+      ...options,
+      secureJsonData: {
+        ...secureJsonData,
+        password: event.target.value,
+      },
+    });
+  };
+
+  const onPasswordReset = () => {
     onOptionsChange({
       ...options,
       secureJsonFields: {
         ...secureJsonFields,
-        basicAuthPassword: false,
+        password: false,
       },
       secureJsonData: {
         ...secureJsonData,
-        basicAuthPassword: '',
+        password: '',
       },
     });
   };
 
-  const onBearerTokenChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const onTokenChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     onOptionsChange({
       ...options,
       secureJsonData: {
         ...secureJsonData,
-        bearerToken: event.target.value,
+        token: event.target.value,
       },
     });
   };
 
-  const onBearerTokenReset = () => {
+  const onTokenReset = () => {
     onOptionsChange({
       ...options,
       secureJsonFields: {
         ...secureJsonFields,
-        bearerToken: false,
+        token: false,
       },
       secureJsonData: {
         ...secureJsonData,
-        bearerToken: '',
+        token: '',
       },
     });
   };
@@ -105,6 +134,8 @@ const ConfigEditor = (props: any) => {
       },
     });
   };
+
+  const authType = jsonData.authType || 'none';
 
   return (
     <>
@@ -137,32 +168,62 @@ const ConfigEditor = (props: any) => {
 
       <FieldSet label="Authentication">
         <Field
-          label="Basic Auth Password"
-          description="Password for basic authentication (username should be set in User field above)"
+          label="Authentication Type"
+          description="Select the authentication method to use"
         >
-          <SecretInput
+          <Select
             width={60}
-            value={secureJsonData?.basicAuthPassword || ''}
-            isConfigured={secureJsonFields?.basicAuthPassword}
-            onChange={onBasicAuthPasswordChange}
-            onReset={onBasicAuthPasswordReset}
-            placeholder="Basic auth password"
+            options={authTypeOptions}
+            value={authType}
+            onChange={onAuthTypeChange}
           />
         </Field>
 
-        <Field
-          label="Bearer Token"
-          description="Bearer token for authentication (alternative to basic auth)"
-        >
-          <SecretInput
-            width={60}
-            value={secureJsonData?.bearerToken || ''}
-            isConfigured={secureJsonFields?.bearerToken}
-            onChange={onBearerTokenChange}
-            onReset={onBearerTokenReset}
-            placeholder="Bearer token"
-          />
-        </Field>
+        {authType === 'basic' && (
+          <>
+            <Field
+              label="Username"
+              description="Username for basic authentication"
+            >
+              <Input
+                width={60}
+                value={jsonData.username || ''}
+                onChange={onUsernameChange}
+                placeholder="Username"
+              />
+            </Field>
+
+            <Field
+              label="Password"
+              description="Password for basic authentication"
+            >
+              <SecretInput
+                width={60}
+                value={secureJsonData?.password || ''}
+                isConfigured={secureJsonFields?.password}
+                onChange={onPasswordChange}
+                onReset={onPasswordReset}
+                placeholder="Password"
+              />
+            </Field>
+          </>
+        )}
+
+        {authType === 'bearer' && (
+          <Field
+            label="Bearer Token"
+            description="Bearer token for authentication"
+          >
+            <SecretInput
+              width={60}
+              value={secureJsonData?.token || ''}
+              isConfigured={secureJsonFields?.token}
+              onChange={onTokenChange}
+              onReset={onTokenReset}
+              placeholder="Bearer token"
+            />
+          </Field>
+        )}
       </FieldSet>
 
       <FieldSet label="TLS/SSL Settings">

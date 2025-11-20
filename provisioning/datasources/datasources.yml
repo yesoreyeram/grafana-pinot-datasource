@@ -7,4 +7,5 @@ datasources:
     jsonData:
       brokerUrl: 'http://pinot-broker:8099'
       controllerUrl: 'http://pinot-controller:9000'
+      authType: 'none'
     secureJsonData:
