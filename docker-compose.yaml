@@ -48,8 +48,6 @@ services:
       start_period: 20s
     command: >-
       StartController
-      -clusterName PinotCluster
-      -zkAddress pinot-zookeeper:2181
       -configFileName /config/pinot-controller.conf
 
   pinot-broker:
@@ -67,8 +65,6 @@ services:
       - ./docker/pinot/broker-conf:/config:ro
     command: >-
       StartBroker
-      -clusterName PinotCluster
-      -zkAddress pinot-zookeeper:2181
       -configFileName /config/pinot-broker.conf
 
   pinot-server:
