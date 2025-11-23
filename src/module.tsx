@@ -112,7 +112,7 @@ const FIELD_WIDTH = 60;
 
 const ConfigEditor = (props: any) => {
   const { options, onOptionsChange } = props;
-  const { jsonData, secureJsonFields, secureJsonData } = options;
+  const { jsonData = {}, secureJsonFields, secureJsonData } = options;
 
   const [brokerOpen, setBrokerOpen] = useState(true);
   const [controllerOpen, setControllerOpen] = useState(false);
