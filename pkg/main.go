@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
 // ============================================================================
@@ -395,26 +394,11 @@ func (ds *DataSource) CheckHealth(ctx context.Context, req *backend.CheckHealthR
 }
 
 // QueryData handles query requests from Grafana
-// TODO: Implement actual query execution and data transformation
 func (ds *DataSource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	response := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
-		frame := data.NewFrame(
-			q.QueryType,
-			data.NewField("response", nil, []string{"pinot response"}),
-		).SetMeta(
-			&data.FrameMeta{
-				Notices: []data.Notice{
-					{Text: "Apache Pinot™ query works, but not fully implemented"},
-				},
-			},
-		)
-
-		response.Responses[q.RefID] = backend.DataResponse{
-			Frames: data.Frames{frame},
-			Status: backend.StatusOK,
-		}
+		response.Responses[q.RefID] = ds.executeQuery(ctx, q)
 	}
 
 	return response, nil

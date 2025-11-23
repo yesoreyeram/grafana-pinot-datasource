@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { DataSourcePlugin, DataSourceJsonData, DataSourceInstanceSettings, SelectableValue } from '@grafana/data';
-import { DataQuery } from '@grafana/schema';
 import { DataSourceWithBackend } from '@grafana/runtime';
 import { Field, SecretInput, Input, FieldSet, Select, Collapse } from '@grafana/ui';
+import { PinotQuery } from './types';
+import { QueryEditor as PinotQueryEditor } from './components/QueryEditor';
 
 type AuthType = 'none' | 'basic' | 'bearer';
 
@@ -25,9 +26,7 @@ type SecureConfig = {
   controllerToken?: string;
 };
 
-type Query = {} & DataQuery;
-
-class DataSource extends DataSourceWithBackend<Query, Config> {
+class DataSource extends DataSourceWithBackend<PinotQuery, Config> {
   constructor(instanceSettings: DataSourceInstanceSettings<Config>) {
     super(instanceSettings);
   }
@@ -366,8 +365,6 @@ const ConfigEditor = (props: any) => {
   );
 };
 
-const QueryEditor = () => <>Apache Pinot™ Query Editor</>;
-
-export const plugin = new DataSourcePlugin<DataSource, Query, Config, SecureConfig>(DataSource)
+export const plugin = new DataSourcePlugin<DataSource, PinotQuery, Config, SecureConfig>(DataSource)
   .setConfigEditor(ConfigEditor)
-  .setQueryEditor(QueryEditor);
+  .setQueryEditor(PinotQueryEditor);

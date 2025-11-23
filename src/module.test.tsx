@@ -12,6 +12,15 @@ jest.mock('@grafana/ui', () => ({
       {children}
     </div>
   ),
+  InlineField: ({ children, label }: any) => (
+    <div data-testid="inline-field">
+      <label>{label}</label>
+      {children}
+    </div>
+  ),
+  InlineFieldRow: ({ children }: any) => (
+    <div data-testid="inline-field-row">{children}</div>
+  ),
   SecretInput: ({ value, onChange, onReset, isConfigured, placeholder }: any) => (
     <div data-testid="secret-input">
       {isConfigured ? (
@@ -70,6 +79,20 @@ jest.mock('@grafana/ui', () => ({
     <div data-testid="collapse">
       <div>{label}</div>
       {isOpen && <div>{children}</div>}
+    </div>
+  ),
+}));
+
+// Mock @grafana/plugin-ui
+jest.mock('@grafana/plugin-ui', () => ({
+  SQLEditor: ({ query, onChange, onRunQuery }: any) => (
+    <div data-testid="sql-editor">
+      <textarea
+        data-testid="sql-textarea"
+        value={query.rawSql || ''}
+        onChange={(e) => onChange({ ...query, rawSql: e.target.value })}
+      />
+      <button onClick={onRunQuery} data-testid="run-query">Run Query</button>
     </div>
   ),
 }));
@@ -368,10 +391,12 @@ describe('ConfigEditor', () => {
 });
 
 describe('QueryEditor', () => {
-  it('should render query editor', () => {
+  it('should render query editor with SQL editor', () => {
     const QueryEditor = plugin.components.QueryEditor!;
-    const mockDatasource = {} as any;
-    const mockQuery = { refId: 'A' } as any;
+    const mockDatasource = {
+      getResource: jest.fn().mockResolvedValue({ tables: [] }),
+    } as any;
+    const mockQuery = { refId: 'A', rawSql: '', format: 'table' } as any;
     const mockOnRunQuery = jest.fn();
     const mockOnChange = jest.fn();
     
@@ -384,7 +409,54 @@ describe('QueryEditor', () => {
       />
     );
     
-    expect(container).toHaveTextContent('Apache Pinot™ Query Editor');
+    // Check for SQL editor component
+    expect(container.querySelector('[data-testid="sql-editor"]')).toBeInTheDocument();
+  });
+
+  it('should render format selector', () => {
+    const QueryEditor = plugin.components.QueryEditor!;
+    const mockDatasource = {
+      getResource: jest.fn().mockResolvedValue({ tables: [] }),
+    } as any;
+    const mockQuery = { refId: 'A', rawSql: '', format: 'table' } as any;
+    const mockOnRunQuery = jest.fn();
+    const mockOnChange = jest.fn();
+    
+    render(
+      <QueryEditor 
+        datasource={mockDatasource}
+        query={mockQuery}
+        onRunQuery={mockOnRunQuery}
+        onChange={mockOnChange}
+      />
+    );
+    
+    // Check that format selector exists
+    const selects = screen.getAllByTestId('select-input');
+    expect(selects.length).toBeGreaterThan(0);
+  });
+
+  it('should show time column input when format is timeseries', () => {
+    const QueryEditor = plugin.components.QueryEditor!;
+    const mockDatasource = {
+      getResource: jest.fn().mockResolvedValue({ tables: [] }),
+    } as any;
+    const mockQuery = { refId: 'A', rawSql: '', format: 'timeseries', timeColumn: '' } as any;
+    const mockOnRunQuery = jest.fn();
+    const mockOnChange = jest.fn();
+    
+    render(
+      <QueryEditor 
+        datasource={mockDatasource}
+        query={mockQuery}
+        onRunQuery={mockOnRunQuery}
+        onChange={mockOnChange}
+      />
+    );
+    
+    // Check for time column input
+    const timeInput = screen.getByPlaceholderText(/timestamp|created_at/i);
+    expect(timeInput).toBeInTheDocument();
   });
 });
 
