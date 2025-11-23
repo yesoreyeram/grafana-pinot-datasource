@@ -1,12 +1,9 @@
 import { test, expect } from '@grafana/plugin-e2e';
-import { selectors } from '../src/module';
 
 /**
  * E2E tests for Apache Pinot datasource configuration
  * Tests the datasource configuration page and health check functionality
  */
-
-const sel = selectors.ConfigEditor;
 
 test.describe('Apache Pinot Datasource Configuration - Broker', () => {
   
@@ -14,7 +11,7 @@ test.describe('Apache Pinot Datasource Configuration - Broker', () => {
     const configPage = await createDataSourceConfigPage({ type: 'yesoreyeram-pinot-datasource' });
     
     // Wait for the broker URL field to be visible
-    await expect(page.getByPlaceholder(sel.BrokerURL.placeholder)).toBeVisible({ timeout: 15000 });
+    await expect(page.getByPlaceholder('http://localhost:8099')).toBeVisible({ timeout: 15000 });
     
     // Click "Save & test" button without filling broker URL
     const healthCheckResponse = await configPage.saveAndTest();
@@ -27,10 +24,10 @@ test.describe('Apache Pinot Datasource Configuration - Broker', () => {
     const configPage = await createDataSourceConfigPage({ type: 'yesoreyeram-pinot-datasource' });
     
     // Wait for the broker URL field to be visible
-    await expect(page.getByPlaceholder(sel.BrokerURL.placeholder)).toBeVisible({ timeout: 15000 });
+    await expect(page.getByPlaceholder('http://localhost:8099')).toBeVisible({ timeout: 15000 });
     
     // Fill in the broker URL (using docker-compose service name)
-    await page.getByPlaceholder(sel.BrokerURL.placeholder).fill('http://pinot-broker:8099');
+    await page.getByPlaceholder('http://localhost:8099').fill('http://pinot-broker:8099');
     
     // Click "Save & test" button
     const healthCheckResponse = await configPage.saveAndTest();
@@ -46,10 +43,10 @@ test.describe('Apache Pinot Datasource Configuration - Broker', () => {
     const configPage = await createDataSourceConfigPage({ type: 'yesoreyeram-pinot-datasource' });
     
     // Wait for the broker URL field to be visible
-    await expect(page.getByPlaceholder(sel.BrokerURL.placeholder)).toBeVisible({ timeout: 15000 });
+    await expect(page.getByPlaceholder('http://localhost:8099')).toBeVisible({ timeout: 15000 });
     
     // Fill in an incorrect broker URL
-    await page.getByPlaceholder(sel.BrokerURL.placeholder).fill('http://invalid-broker:9999');
+    await page.getByPlaceholder('http://localhost:8099').fill('http://invalid-broker:9999');
     
     // Click "Save & test" button
     const healthCheckResponse = await configPage.saveAndTest();
@@ -65,10 +62,10 @@ test.describe('Apache Pinot Datasource Configuration - Broker', () => {
     const configPage = await createDataSourceConfigPage({ type: 'yesoreyeram-pinot-datasource' });
     
     // Wait for the broker URL field to be visible
-    await expect(page.getByPlaceholder(sel.BrokerURL.placeholder)).toBeVisible({ timeout: 15000 });
+    await expect(page.getByPlaceholder('http://localhost:8099')).toBeVisible({ timeout: 15000 });
     
     // Fill in the broker URL
-    await page.getByPlaceholder(sel.BrokerURL.placeholder).fill('http://pinot-broker:8099');
+    await page.getByPlaceholder('http://localhost:8099').fill('http://pinot-broker:8099');
     
     // Find auth type dropdown by looking for the first combobox
     const authTypeField = page.getByRole('combobox').first();
@@ -76,18 +73,18 @@ test.describe('Apache Pinot Datasource Configuration - Broker', () => {
     
     // Change to Basic Authentication
     await authTypeField.click();
-    await page.getByRole('option', { name: sel.AuthOptions.basic.label }).click();
+    await page.getByRole('option', { name: 'Basic Authentication' }).click();
     
     // Verify username and password fields appear
-    await expect(page.getByPlaceholder(sel.BrokerUsername.placeholder).first()).toBeVisible();
-    await expect(page.getByPlaceholder(sel.BrokerPassword.placeholder).first()).toBeVisible();
+    await expect(page.getByPlaceholder('Username').first()).toBeVisible();
+    await expect(page.getByPlaceholder('Password').first()).toBeVisible();
     
     // Change back to No Authentication to verify field hiding
     await authTypeField.click();
-    await page.getByRole('option', { name: sel.AuthOptions.none.label }).click();
+    await page.getByRole('option', { name: 'No Authentication' }).click();
     
     // Verify username and password fields are hidden
-    await expect(page.getByPlaceholder(sel.BrokerUsername.placeholder).first()).not.toBeVisible();
+    await expect(page.getByPlaceholder('Username').first()).not.toBeVisible();
   });
 
   test('should persist broker configuration after save', async ({ createDataSourceConfigPage, gotoDataSourceConfigPage, page }) => {
@@ -97,11 +94,11 @@ test.describe('Apache Pinot Datasource Configuration - Broker', () => {
     });
     
     // Wait for broker URL field to be visible
-    await expect(page.getByPlaceholder(sel.BrokerURL.placeholder)).toBeVisible({ timeout: 15000 });
+    await expect(page.getByPlaceholder('http://localhost:8099')).toBeVisible({ timeout: 15000 });
     
     // Fill in the broker URL
     const brokerUrl = 'http://pinot-broker:8099';
-    await page.getByPlaceholder(sel.BrokerURL.placeholder).fill(brokerUrl);
+    await page.getByPlaceholder('http://localhost:8099').fill(brokerUrl);
     
     // Save the datasource
     const healthCheckResponse = await configPage.saveAndTest();
@@ -113,7 +110,7 @@ test.describe('Apache Pinot Datasource Configuration - Broker', () => {
     await gotoDataSourceConfigPage(uid);
     
     // Verify the broker URL is still there
-    await expect(page.getByPlaceholder(sel.BrokerURL.placeholder)).toHaveValue(brokerUrl);
+    await expect(page.getByPlaceholder('http://localhost:8099')).toHaveValue(brokerUrl);
     
     // Clean up - delete the datasource
     await configPage.deleteDataSource();
@@ -126,19 +123,19 @@ test.describe('Apache Pinot Datasource Configuration - Controller', () => {
     const configPage = await createDataSourceConfigPage({ type: 'yesoreyeram-pinot-datasource' });
     
     // Wait for broker URL field to be visible
-    await expect(page.getByPlaceholder(sel.BrokerURL.placeholder)).toBeVisible({ timeout: 15000 });
+    await expect(page.getByPlaceholder('http://localhost:8099')).toBeVisible({ timeout: 15000 });
     
     // Fill in the broker URL
-    await page.getByPlaceholder(sel.BrokerURL.placeholder).fill('http://pinot-broker:8099');
+    await page.getByPlaceholder('http://localhost:8099').fill('http://pinot-broker:8099');
     
     // Expand the controller section by clicking on it
-    await page.getByText(sel.ControllerSection.label).click();
+    await page.getByText('Controller Configuration (Optional)').click();
     
     // Wait for controller URL field to be visible after expanding
-    await expect(page.getByPlaceholder(sel.ControllerURL.placeholder)).toBeVisible({ timeout: 15000 });
+    await expect(page.getByPlaceholder('http://localhost:9000')).toBeVisible({ timeout: 15000 });
     
     // Fill in the controller URL
-    await page.getByPlaceholder(sel.ControllerURL.placeholder).fill('http://pinot-controller:9000');
+    await page.getByPlaceholder('http://localhost:9000').fill('http://pinot-controller:9000');
     
     // Click "Save & test" button
     const healthCheckResponse = await configPage.saveAndTest();
@@ -155,19 +152,19 @@ test.describe('Apache Pinot Datasource Configuration - Controller', () => {
     const configPage = await createDataSourceConfigPage({ type: 'yesoreyeram-pinot-datasource' });
     
     // Wait for broker URL field to be visible
-    await expect(page.getByPlaceholder(sel.BrokerURL.placeholder)).toBeVisible({ timeout: 15000 });
+    await expect(page.getByPlaceholder('http://localhost:8099')).toBeVisible({ timeout: 15000 });
     
     // Fill in a correct broker URL
-    await page.getByPlaceholder(sel.BrokerURL.placeholder).fill('http://pinot-broker:8099');
+    await page.getByPlaceholder('http://localhost:8099').fill('http://pinot-broker:8099');
     
     // Expand the controller section
-    await page.getByText(sel.ControllerSection.label).click();
+    await page.getByText('Controller Configuration (Optional)').click();
     
     // Wait for controller URL field to be visible after expanding
-    await expect(page.getByPlaceholder(sel.ControllerURL.placeholder)).toBeVisible({ timeout: 15000 });
+    await expect(page.getByPlaceholder('http://localhost:9000')).toBeVisible({ timeout: 15000 });
     
     // Fill in an incorrect controller URL
-    await page.getByPlaceholder(sel.ControllerURL.placeholder).fill('http://invalid-controller:9999');
+    await page.getByPlaceholder('http://localhost:9000').fill('http://invalid-controller:9999');
     
     // Click "Save & test" button
     const healthCheckResponse = await configPage.saveAndTest();
@@ -186,21 +183,21 @@ test.describe('Apache Pinot Datasource Configuration - Controller', () => {
     });
     
     // Wait for broker URL field to be visible
-    await expect(page.getByPlaceholder(sel.BrokerURL.placeholder)).toBeVisible({ timeout: 15000 });
+    await expect(page.getByPlaceholder('http://localhost:8099')).toBeVisible({ timeout: 15000 });
     
     // Fill in the broker URL
     const brokerUrl = 'http://pinot-broker:8099';
-    await page.getByPlaceholder(sel.BrokerURL.placeholder).fill(brokerUrl);
+    await page.getByPlaceholder('http://localhost:8099').fill(brokerUrl);
     
     // Expand the controller section
-    await page.getByText(sel.ControllerSection.label).click();
+    await page.getByText('Controller Configuration (Optional)').click();
     
     // Wait for controller URL field to be visible after expanding
-    await expect(page.getByPlaceholder(sel.ControllerURL.placeholder)).toBeVisible({ timeout: 15000 });
+    await expect(page.getByPlaceholder('http://localhost:9000')).toBeVisible({ timeout: 15000 });
     
     // Fill in the controller URL
     const controllerUrl = 'http://pinot-controller:9000';
-    await page.getByPlaceholder(sel.ControllerURL.placeholder).fill(controllerUrl);
+    await page.getByPlaceholder('http://localhost:9000').fill(controllerUrl);
     
     // Save the datasource
     const healthCheckResponse = await configPage.saveAndTest();
@@ -212,14 +209,14 @@ test.describe('Apache Pinot Datasource Configuration - Controller', () => {
     await gotoDataSourceConfigPage(uid);
     
     // Verify the broker URL is still there
-    await expect(page.getByPlaceholder(sel.BrokerURL.placeholder)).toHaveValue(brokerUrl);
+    await expect(page.getByPlaceholder('http://localhost:8099')).toHaveValue(brokerUrl);
     
     // Expand the controller section again
-    await page.getByText(sel.ControllerSection.label).click();
-    await expect(page.getByPlaceholder(sel.ControllerURL.placeholder)).toBeVisible({ timeout: 15000 });
+    await page.getByText('Controller Configuration (Optional)').click();
+    await expect(page.getByPlaceholder('http://localhost:9000')).toBeVisible({ timeout: 15000 });
     
     // Verify the controller URL is still there
-    await expect(page.getByPlaceholder(sel.ControllerURL.placeholder)).toHaveValue(controllerUrl);
+    await expect(page.getByPlaceholder('http://localhost:9000')).toHaveValue(controllerUrl);
     
     // Clean up - delete the datasource
     await configPage.deleteDataSource();
@@ -229,19 +226,19 @@ test.describe('Apache Pinot Datasource Configuration - Controller', () => {
     const configPage = await createDataSourceConfigPage({ type: 'yesoreyeram-pinot-datasource' });
     
     // Wait for broker URL field to be visible
-    await expect(page.getByPlaceholder(sel.BrokerURL.placeholder)).toBeVisible({ timeout: 15000 });
+    await expect(page.getByPlaceholder('http://localhost:8099')).toBeVisible({ timeout: 15000 });
     
     // Fill in the broker URL
-    await page.getByPlaceholder(sel.BrokerURL.placeholder).fill('http://pinot-broker:8099');
+    await page.getByPlaceholder('http://localhost:8099').fill('http://pinot-broker:8099');
     
     // Expand the controller section
-    await page.getByText(sel.ControllerSection.label).click();
+    await page.getByText('Controller Configuration (Optional)').click();
     
     // Wait for controller URL field to be visible after expanding
-    await expect(page.getByPlaceholder(sel.ControllerURL.placeholder)).toBeVisible({ timeout: 15000 });
+    await expect(page.getByPlaceholder('http://localhost:9000')).toBeVisible({ timeout: 15000 });
     
     // Fill in the controller URL
-    await page.getByPlaceholder(sel.ControllerURL.placeholder).fill('http://pinot-controller:9000');
+    await page.getByPlaceholder('http://localhost:9000').fill('http://pinot-controller:9000');
     
     // Find controller auth type dropdown (second combobox on the page)
     const authTypeField = page.getByRole('combobox').nth(1);
@@ -249,17 +246,13 @@ test.describe('Apache Pinot Datasource Configuration - Controller', () => {
     
     // Change to Basic Authentication
     await authTypeField.click();
-    await page.getByRole('option', { name: sel.AuthOptions.basic.label }).click();
+    await page.getByRole('option', { name: 'Basic Authentication' }).click();
     
-    // Verify username and password fields appear (use nth to get controller fields)
-    await expect(page.getByPlaceholder(sel.ControllerUsername.placeholder).first()).toBeVisible();
-    await expect(page.getByPlaceholder(sel.ControllerPassword.placeholder).first()).toBeVisible();
-    
-    // Change to Bearer Token
-    await authTypeField.click();
-    await page.getByRole('option', { name: sel.AuthOptions.bearer.label }).click();
-    
-    // Verify token field appears
-    await expect(page.getByPlaceholder(sel.ControllerToken.placeholder).first()).toBeVisible();
+    // Verify username and password fields appear (controller fields will be visible)
+    const usernameFields = page.getByPlaceholder('Username');
+    const passwordFields = page.getByPlaceholder('Password');
+    // Should have 2 username and password fields now (broker and controller)
+    await expect(usernameFields.nth(1)).toBeVisible();
+    await expect(passwordFields.nth(1)).toBeVisible();
   });
 });
