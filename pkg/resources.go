@@ -62,9 +62,13 @@ func (ds *DataSource) handleTables(ctx context.Context, req *backend.CallResourc
 }
 
 // handleTableSchema returns schema for a specific table
+// Note: This feature requires controller API access to fetch table schemas.
+// Currently returns empty array but the SQLEditor component handles this gracefully.
 func (ds *DataSource) handleTableSchema(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	// Extract table name from path: table/{tableName}/schema
-	// For now, return empty columns array as schema endpoint needs to be implemented
+	// TODO: Extract table name from path and fetch schema from Pinot controller
+	// Implementation requires controller API endpoint: GET /tables/{tableName}/schema
+	// For now, return empty columns which allows query builder to work with raw SQL mode
+	
 	response := map[string]interface{}{
 		"columns": []map[string]string{},
 	}

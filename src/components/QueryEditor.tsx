@@ -104,7 +104,9 @@ export const QueryEditor: React.FC<Props> = ({ query, onChange, onRunQuery, data
                 tables: resource.tables || [],
               };
             } catch (error) {
-              console.error('Failed to fetch tables:', error);
+              // Log error for debugging - controller may not be configured
+              console.warn('Unable to fetch table list from Pinot controller:', error);
+              // Return empty list to allow raw SQL mode to work
               return { tables: [] };
             }
           },
@@ -116,7 +118,9 @@ export const QueryEditor: React.FC<Props> = ({ query, onChange, onRunQuery, data
                 columns: resource.columns || [],
               };
             } catch (error) {
-              console.error(`Failed to fetch schema for table ${tableName}:`, error);
+              // Log error for debugging - schema API may not be implemented yet
+              console.warn(`Unable to fetch schema for table ${tableName}:`, error);
+              // Return empty columns to allow raw SQL mode to work
               return { columns: [] };
             }
           },
