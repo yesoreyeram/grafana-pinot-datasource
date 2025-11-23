@@ -1,0 +1,47 @@
+{
+  "description": "JOIN query with multiple tables",
+  "frameName": "A",
+  "rows": 3,
+  "fields": [
+    {
+      "name": "id",
+      "type": "[]*int64",
+      "length": 3,
+      "values": [
+        1,
+        1,
+        2
+      ]
+    },
+    {
+      "name": "name",
+      "type": "[]*string",
+      "length": 3,
+      "values": [
+        "Alice",
+        "Alice",
+        "Bob"
+      ]
+    },
+    {
+      "name": "order_id",
+      "type": "[]*int64",
+      "length": 3,
+      "values": [
+        101,
+        102,
+        103
+      ]
+    },
+    {
+      "name": "total",
+      "type": "[]*float64",
+      "length": 3,
+      "values": [
+        99.99,
+        149.99,
+        79.99
+      ]
+    }
+  ]
+}

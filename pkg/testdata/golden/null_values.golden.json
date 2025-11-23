@@ -1,0 +1,37 @@
+{
+  "description": "Query with NULL values in results",
+  "frameName": "A",
+  "rows": 3,
+  "fields": [
+    {
+      "name": "id",
+      "type": "[]*int64",
+      "length": 3,
+      "values": [
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "name": "name",
+      "type": "[]*string",
+      "length": 3,
+      "values": [
+        "Alice",
+        "Bob",
+        "Charlie"
+      ]
+    },
+    {
+      "name": "optional_field",
+      "type": "[]*string",
+      "length": 3,
+      "values": [
+        "value1",
+        null,
+        "value3"
+      ]
+    }
+  ]
+}

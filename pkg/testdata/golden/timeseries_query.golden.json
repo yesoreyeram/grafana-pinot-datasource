@@ -1,0 +1,27 @@
+{
+  "description": "Timeseries query with timestamp and value columns",
+  "frameName": "A",
+  "rows": 3,
+  "fields": [
+    {
+      "name": "timestamp",
+      "type": "[]*time.Time",
+      "length": 3,
+      "values": [
+        "2021-12-01T12:00:00Z",
+        "2021-12-01T12:01:00Z",
+        "2021-12-01T12:02:00Z"
+      ]
+    },
+    {
+      "name": "value",
+      "type": "[]*float64",
+      "length": 3,
+      "values": [
+        42.5,
+        43.2,
+        44.1
+      ]
+    }
+  ]
+}

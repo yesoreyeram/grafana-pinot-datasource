@@ -5,7 +5,7 @@ import { test, expect } from '@grafana/plugin-e2e';
  * Tests the query editor functionality and query execution
  */
 
-test.describe('Apache Pinot Query Editor', () => {
+test.describe('Apache Pinot Query Editor - Basic Functionality', () => {
   let datasourceUid: string;
 
   test.beforeAll(async ({ createDataSourceConfigPage }) => {
@@ -19,6 +19,11 @@ test.describe('Apache Pinot Query Editor', () => {
     const page = configPage.page;
     await expect(page.getByPlaceholder('http://localhost:8099')).toBeVisible({ timeout: 15000 });
     await page.getByPlaceholder('http://localhost:8099').fill('http://pinot-broker:8099');
+
+    // Configure controller URL for metadata
+    await page.getByText('Controller Configuration (Optional)').click();
+    await expect(page.getByPlaceholder('http://localhost:9000')).toBeVisible({ timeout: 15000 });
+    await page.getByPlaceholder('http://localhost:9000').fill('http://pinot-controller:9000');
 
     // Save and verify
     const healthCheckResponse = await configPage.saveAndTest();
@@ -148,6 +153,122 @@ test.describe('Apache Pinot Query Editor', () => {
         await deleteButton.click();
 
         // Confirm deletion if prompted
+        const confirmButton = page.getByRole('button', { name: /confirm|yes|delete/i });
+        if (await confirmButton.isVisible({ timeout: 3000 }).catch(() => false)) {
+          await confirmButton.click();
+        }
+      }
+    }
+  });
+});
+
+test.describe('Apache Pinot Query Editor - Real Data Queries', () => {
+  let datasourceUid: string;
+
+  test.beforeAll(async ({ createDataSourceConfigPage }) => {
+    const configPage = await createDataSourceConfigPage({
+      type: 'yesoreyeram-pinot-datasource',
+      deleteDataSourceAfterTest: false,
+    });
+
+    const page = configPage.page;
+    await expect(page.getByPlaceholder('http://localhost:8099')).toBeVisible({ timeout: 15000 });
+    await page.getByPlaceholder('http://localhost:8099').fill('http://pinot-broker:8099');
+    
+    await page.getByText('Controller Configuration (Optional)').click();
+    await expect(page.getByPlaceholder('http://localhost:9000')).toBeVisible({ timeout: 15000 });
+    await page.getByPlaceholder('http://localhost:9000').fill('http://pinot-controller:9000');
+
+    const healthCheckResponse = await configPage.saveAndTest();
+    expect(healthCheckResponse.status()).toBe(200);
+
+    datasourceUid = configPage.datasource.uid;
+  });
+
+  test('should query airlineStats sample data', async ({ explorePage, page }) => {
+    await explorePage.datasource.set(datasourceUid);
+    await page.waitForTimeout(1000);
+
+    // Query the airline stats table
+    const query = 'SELECT Origin, Dest, COUNT(*) as flight_count FROM airlineStats GROUP BY Origin, Dest LIMIT 10';
+    
+    const codeEditor = page.locator('[data-testid="data-testid Code editor container"]').first();
+    if (await codeEditor.isVisible({ timeout: 5000 }).catch(() => false)) {
+      await codeEditor.click();
+      await page.keyboard.type(query);
+    } else {
+      const textarea = page.locator('textarea').first();
+      await expect(textarea).toBeVisible({ timeout: 10000 });
+      await textarea.fill(query);
+    }
+
+    await explorePage.runQuery();
+    await page.waitForTimeout(3000);
+
+    // Should not show error
+    const errorElements = page.locator('[role="alert"]').filter({ hasText: /error|failed/i });
+    const errorCount = await errorElements.count();
+    expect(errorCount).toBe(0);
+  });
+
+  test('should query baseballStats sample data', async ({ explorePage, page }) => {
+    await explorePage.datasource.set(datasourceUid);
+    await page.waitForTimeout(1000);
+
+    const query = 'SELECT playerName, teamID, homeRuns FROM baseballStats WHERE homeRuns > 30 LIMIT 10';
+    
+    const codeEditor = page.locator('[data-testid="data-testid Code editor container"]').first();
+    if (await codeEditor.isVisible({ timeout: 5000 }).catch(() => false)) {
+      await codeEditor.click();
+      await page.keyboard.press('Control+A');
+      await page.keyboard.type(query);
+    } else {
+      const textarea = page.locator('textarea').first();
+      await expect(textarea).toBeVisible({ timeout: 10000 });
+      await textarea.fill(query);
+    }
+
+    await explorePage.runQuery();
+    await page.waitForTimeout(3000);
+
+    const errorElements = page.locator('[role="alert"]').filter({ hasText: /error|failed/i });
+    const errorCount = await errorElements.count();
+    expect(errorCount).toBe(0);
+  });
+
+  test('should execute aggregation query on ecommerce data', async ({ explorePage, page }) => {
+    await explorePage.datasource.set(datasourceUid);
+    await page.waitForTimeout(1000);
+
+    const query = 'SELECT COUNT(*) as total_orders, AVG(total) as avg_total FROM ecommerce_orders';
+    
+    const codeEditor = page.locator('[data-testid="data-testid Code editor container"]').first();
+    if (await codeEditor.isVisible({ timeout: 5000 }).catch(() => false)) {
+      await codeEditor.click();
+      await page.keyboard.press('Control+A');
+      await page.keyboard.type(query);
+    } else {
+      const textarea = page.locator('textarea').first();
+      await expect(textarea).toBeVisible({ timeout: 10000 });
+      await textarea.fill(query);
+    }
+
+    await explorePage.runQuery();
+    await page.waitForTimeout(3000);
+
+    const errorElements = page.locator('[role="alert"]').filter({ hasText: /error|failed/i });
+    const errorCount = await errorElements.count();
+    expect(errorCount).toBe(0);
+  });
+
+  test.afterAll(async ({ gotoDataSourceConfigPage, page }) => {
+    if (datasourceUid) {
+      await gotoDataSourceConfigPage(datasourceUid);
+      await page.waitForTimeout(1000);
+
+      const deleteButton = page.getByRole('button', { name: /delete/i });
+      if (await deleteButton.isVisible({ timeout: 5000 }).catch(() => false)) {
+        await deleteButton.click();
         const confirmButton = page.getByRole('button', { name: /confirm|yes|delete/i });
         if (await confirmButton.isVisible({ timeout: 3000 }).catch(() => false)) {
           await confirmButton.click();

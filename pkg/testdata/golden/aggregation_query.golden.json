@@ -1,0 +1,47 @@
+{
+  "description": "Aggregation query with GROUP BY and aggregate functions",
+  "frameName": "A",
+  "rows": 3,
+  "fields": [
+    {
+      "name": "category",
+      "type": "[]*string",
+      "length": 3,
+      "values": [
+        "Electronics",
+        "Clothing",
+        "Books"
+      ]
+    },
+    {
+      "name": "count",
+      "type": "[]*int64",
+      "length": 3,
+      "values": [
+        150,
+        200,
+        100
+      ]
+    },
+    {
+      "name": "avg_price",
+      "type": "[]*float64",
+      "length": 3,
+      "values": [
+        299.99,
+        49.99,
+        19.99
+      ]
+    },
+    {
+      "name": "total_qty",
+      "type": "[]*int64",
+      "length": 3,
+      "values": [
+        450,
+        800,
+        350
+      ]
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "description": "Simple SELECT query with multiple data types",
+  "frameName": "A",
+  "rows": 3,
+  "fields": [
+    {
+      "name": "id",
+      "type": "[]*int64",
+      "length": 3,
+      "values": [
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "name": "name",
+      "type": "[]*string",
+      "length": 3,
+      "values": [
+        "Alice",
+        "Bob",
+        "Charlie"
+      ]
+    },
+    {
+      "name": "age",
+      "type": "[]*int64",
+      "length": 3,
+      "values": [
+        25,
+        30,
+        35
+      ]
+    }
+  ]
+}
