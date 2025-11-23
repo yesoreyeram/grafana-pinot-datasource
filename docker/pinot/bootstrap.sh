@@ -6,10 +6,6 @@ CONTROLLER_HOST=${PINOT_CONTROLLER_HOST:-pinot-controller}
 CONTROLLER_PORT=${PINOT_CONTROLLER_PORT:-9000}
 CONTROLLER_URL="${CONTROLLER_PROTOCOL}://${CONTROLLER_HOST}:${CONTROLLER_PORT}"
 
-# Default authentication credentials for bootstrap (using admin user)
-CONTROLLER_AUTH_USER=${PINOT_CONTROLLER_AUTH_USER:-admin}
-CONTROLLER_AUTH_PASS=${PINOT_CONTROLLER_AUTH_PASS:-admin123}
-
 resolve_pinot_admin() {
   if command -v pinot-admin.sh >/dev/null 2>&1; then
     command -v pinot-admin.sh
@@ -31,9 +27,9 @@ PINOT_ADMIN_CMD=${PINOT_ADMIN_CMD:-$(resolve_pinot_admin)}
 _http_probe() {
   local url=$1
   if command -v curl >/dev/null 2>&1; then
-    curl -fsS -u "${CONTROLLER_AUTH_USER}:${CONTROLLER_AUTH_PASS}" "$url" >/dev/null
+    curl -fsS "$url" >/dev/null
   elif command -v wget >/dev/null 2>&1; then
-    wget --user="${CONTROLLER_AUTH_USER}" --password="${CONTROLLER_AUTH_PASS}" -qO- "$url" >/dev/null
+    wget -qO- "$url" >/dev/null
   else
     echo "Neither curl nor wget is available to probe $url" >&2
     return 1
@@ -57,8 +53,8 @@ wait_for_instances() {
   echo "Waiting for broker and server instances to register..."
   for attempt in $(seq 1 40); do
     if command -v curl >/dev/null 2>&1; then
-      local instances=$(curl -s -u "${CONTROLLER_AUTH_USER}:${CONTROLLER_AUTH_PASS}" "${CONTROLLER_URL}/instances" | grep -o '"Broker_' | wc -l)
-      local servers=$(curl -s -u "${CONTROLLER_AUTH_USER}:${CONTROLLER_AUTH_PASS}" "${CONTROLLER_URL}/instances" | grep -o '"Server_' | wc -l)
+      local instances=$(curl -s "${CONTROLLER_URL}/instances" | grep -o '"Broker_' | wc -l)
+      local servers=$(curl -s "${CONTROLLER_URL}/instances" | grep -o '"Server_' | wc -l)
       if [ "$instances" -gt 0 ] && [ "$servers" -gt 0 ]; then
         echo "Broker and server instances are registered"
         sleep 5  # Additional wait for full initialization
@@ -77,7 +73,6 @@ add_schema() {
   echo "Adding schema from ${schema_file}"
   if command -v curl >/dev/null 2>&1; then
     curl -X POST "${CONTROLLER_URL}/schemas" \
-      -u "${CONTROLLER_AUTH_USER}:${CONTROLLER_AUTH_PASS}" \
       -H "Content-Type: application/json" \
       -d @"${schema_file}"
   else
@@ -86,8 +81,6 @@ add_schema() {
       -controllerProtocol "${CONTROLLER_PROTOCOL}" \
       -controllerHost "${CONTROLLER_HOST}" \
       -controllerPort "${CONTROLLER_PORT}" \
-      -user "${CONTROLLER_AUTH_USER}" \
-      -password "${CONTROLLER_AUTH_PASS}" \
       -exec
   fi
 }
@@ -98,7 +91,6 @@ add_table() {
   echo "Adding table defined in ${table_config}"
   if command -v curl >/dev/null 2>&1; then
     curl -X POST "${CONTROLLER_URL}/tables" \
-      -u "${CONTROLLER_AUTH_USER}:${CONTROLLER_AUTH_PASS}" \
       -H "Content-Type: application/json" \
       -d @"${table_config}"
   else
@@ -108,8 +100,6 @@ add_table() {
       -controllerProtocol "${CONTROLLER_PROTOCOL}" \
       -controllerHost "${CONTROLLER_HOST}" \
       -controllerPort "${CONTROLLER_PORT}" \
-      -user "${CONTROLLER_AUTH_USER}" \
-      -password "${CONTROLLER_AUTH_PASS}" \
       -exec
   fi
 }
@@ -136,9 +126,7 @@ run_ingestion_job() {
     -segmentDir "${output_dir}" \
     -controllerProtocol "${CONTROLLER_PROTOCOL}" \
     -controllerHost "${CONTROLLER_HOST}" \
-    -controllerPort "${CONTROLLER_PORT}" \
-    -user "${CONTROLLER_AUTH_USER}" \
-    -password "${CONTROLLER_AUTH_PASS}"
+    -controllerPort "${CONTROLLER_PORT}"
 }
 
 wait_for_controller
