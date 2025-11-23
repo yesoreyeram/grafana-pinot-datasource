@@ -33,6 +33,8 @@ services:
       - 9000:9000
     environment:
       JAVA_OPTS: "-Xms512M -Xmx512M"
+    volumes:
+      - ./docker/pinot/controller-conf:/config:ro
     healthcheck:
       test:
         - CMD
@@ -49,6 +51,7 @@ services:
       -clusterName PinotCluster
       -zkAddress pinot-zookeeper:2181
       -controllerPort 9000
+      -configFileName /config/pinot-controller.conf
 
   pinot-broker:
     image: ${PINOT_IMAGE:-apachepinot/pinot:1.2.0}
@@ -61,11 +64,14 @@ services:
       - 8099:8099
     environment:
       JAVA_OPTS: "-Xms512M -Xmx512M"
+    volumes:
+      - ./docker/pinot/broker-conf:/config:ro
     command: >-
       StartBroker
       -clusterName PinotCluster
       -zkAddress pinot-zookeeper:2181
       -brokerPort 8099
+      -configFileName /config/pinot-broker.conf
 
   pinot-server:
     image: ${PINOT_IMAGE:-apachepinot/pinot:1.2.0}
