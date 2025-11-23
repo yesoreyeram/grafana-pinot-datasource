@@ -81,6 +81,27 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
+// Common test data
+const mockOnOptionsChange = jest.fn();
+const defaultOptions = {
+  id: 1,
+  uid: 'test-uid',
+  orgId: 1,
+  name: 'Test Pinot',
+  type: 'yesoreyeram-pinot-datasource',
+  typeName: 'Apache Pinot',
+  access: 'proxy',
+  url: '',
+  user: '',
+  database: '',
+  basicAuth: false,
+  isDefault: false,
+  jsonData: {},
+  secureJsonFields: {},
+  readOnly: false,
+  withCredentials: false,
+};
+
 describe('Apache Pinot DataSource Plugin', () => {
   it('should be a DataSourcePlugin instance', () => {
     expect(plugin).toBeInstanceOf(DataSourcePlugin);
@@ -96,27 +117,6 @@ describe('Apache Pinot DataSource Plugin', () => {
 });
 
 describe('ConfigEditor', () => {
-  const defaultOptions = {
-    id: 1,
-    uid: 'test-uid',
-    orgId: 1,
-    name: 'Test Pinot',
-    type: 'yesoreyeram-pinot-datasource',
-    typeName: 'Apache Pinot',
-    access: 'proxy',
-    url: '',
-    user: '',
-    database: '',
-    basicAuth: false,
-    isDefault: false,
-    jsonData: {},
-    secureJsonFields: {},
-    readOnly: false,
-    withCredentials: false,
-  };
-
-  const mockOnOptionsChange = jest.fn();
-
   beforeEach(() => {
     mockOnOptionsChange.mockClear();
   });
@@ -398,23 +398,3 @@ describe('Configuration Types', () => {
     expect(container).toBeInTheDocument();
   });
 });
-
-const mockOnOptionsChange = jest.fn();
-const defaultOptions = {
-  id: 1,
-  uid: 'test-uid',
-  orgId: 1,
-  name: 'Test Pinot',
-  type: 'yesoreyeram-pinot-datasource',
-  typeName: 'Apache Pinot',
-  access: 'proxy',
-  url: '',
-  user: '',
-  database: '',
-  basicAuth: false,
-  isDefault: false,
-  jsonData: {},
-  secureJsonFields: {},
-  readOnly: false,
-  withCredentials: false,
-};
