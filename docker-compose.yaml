@@ -49,6 +49,7 @@ services:
       -clusterName PinotCluster
       -zkAddress pinot-zookeeper:2181
       -controllerPort 9000
+      -dataDir /var/pinot/controller/data
 
   pinot-broker:
     image: ${PINOT_IMAGE:-apachepinot/pinot:1.2.0}

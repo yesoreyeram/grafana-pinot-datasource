@@ -1,8 +1,17 @@
 apiVersion: 1
 
 datasources:
-  - name: 'Apache Pinot™'
+  # Default Apache Pinot datasource without authentication
+  - name: 'Apache Pinot'
     type: 'yesoreyeram-pinot-datasource'
-    uid: apache_pinot_default
+    uid: pinot_default
+    isDefault: true
     jsonData:
-    secureJsonData:
+      broker:
+        url: 'http://pinot-broker:8099'
+        authType: 'none'
+        tlsSkipVerify: false
+      controller:
+        url: 'http://pinot-controller:9000'
+        authType: 'none'
+        tlsSkipVerify: false
