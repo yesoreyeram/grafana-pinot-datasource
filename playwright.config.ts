@@ -1,8 +1,5 @@
 import type { PluginOptions } from '@grafana/plugin-e2e';
 import { defineConfig, devices } from '@playwright/test';
-import { dirname } from 'node:path';
-
-const pluginE2eAuth = `${dirname(require.resolve('@grafana/plugin-e2e'))}/auth`;
 
 /**
  * Read environment variables from file.
@@ -34,20 +31,12 @@ export default defineConfig<PluginOptions>({
 
   /* Configure projects for major browsers */
   projects: [
-    // 1. Login to Grafana and store the cookie on disk for use in other tests.
-    {
-      name: 'auth',
-      testDir: pluginE2eAuth,
-      testMatch: [/.*\.js/],
-    },
-    // 2. Run tests in Google Chrome. Every test will start authenticated as admin user.
+    // Run tests in Google Chrome. Anonymous auth is enabled with admin role in docker-compose.
     {
       name: 'chromium',
       use: {
         ...devices['Desktop Chrome'],
-        storageState: 'playwright/.auth/admin.json',
       },
-      dependencies: ['auth'],
     },
   ],
 });
