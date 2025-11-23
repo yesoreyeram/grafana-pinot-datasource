@@ -368,6 +368,9 @@ const ConfigEditor = (props: any) => {
 
 const QueryEditor = () => <>Apache Pinot™ Query Editor</>;
 
+// Export selectors for E2E tests
+export { selectors };
+
 export const plugin = new DataSourcePlugin<DataSource, Query, Config, SecureConfig>(DataSource)
   .setConfigEditor(ConfigEditor)
   .setQueryEditor(QueryEditor);
