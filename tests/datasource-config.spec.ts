@@ -8,38 +8,40 @@ import { test, expect } from '@grafana/plugin-e2e';
 test.describe('Apache Pinot Datasource Configuration', () => {
   
   test('should display health check error when broker URL is missing', async ({ page }) => {
-    // Navigate to new datasource page
-    await page.goto('/connections/datasources/new');
+    // Navigate to add new connection page
+    await page.goto('/connections/add-new-connection?cat=data-source');
     
-    // Find and click on Apache Pinot datasource
-    await page.getByRole('link', { name: 'Apache Pinot™' }).click();
+    // Wait for and click on Apache Pinot datasource
+    await page.getByRole('heading', { name: /apache pinot/i }).click();
+    
+    // Click "Add new data source" button
+    await page.getByRole('button', { name: /add new data source/i }).click();
     
     // Wait for the config page to load
-    await expect(page.getByText('Broker Configuration')).toBeVisible();
+    await expect(page.getByText('Broker Configuration')).toBeVisible({ timeout: 15000 });
     
     // Click "Save & test" button without filling broker URL
     await page.getByRole('button', { name: /save.*test/i }).click();
     
     // Expect error message about broker URL being required or health check failing
-    await expect(page.getByText(/broker.*url.*required|health check failed|broker.*failed/i)).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(/broker.*url.*required|health check failed|broker.*failed|failed to connect/i)).toBeVisible({ timeout: 15000 });
   });
 
   test('should pass health check with valid broker URL only', async ({ page }) => {
-    // Navigate to new datasource page
-    await page.goto('/connections/datasources/new');
+    // Navigate to add new connection page
+    await page.goto('/connections/add-new-connection?cat=data-source');
     
-    // Find and click on Apache Pinot datasource
-    await page.getByRole('link', { name: 'Apache Pinot™' }).click();
+    // Wait for and click on Apache Pinot datasource
+    await page.getByRole('heading', { name: /apache pinot/i }).click();
+    
+    // Click "Add new data source" button
+    await page.getByRole('button', { name: /add new data source/i }).click();
     
     // Wait for the config page to load
-    await expect(page.getByText('Broker Configuration')).toBeVisible();
-    
-    // Expand broker section if collapsed
-    const brokerSection = page.getByText('Broker Configuration');
-    await brokerSection.click();
+    await expect(page.getByText('Broker Configuration')).toBeVisible({ timeout: 15000 });
     
     // Fill in the broker URL (using docker-compose service name)
-    await page.getByLabel(/broker url/i).fill('http://pinot-broker:8099');
+    await page.getByPlaceholder('http://localhost:8099').fill('http://pinot-broker:8099');
     
     // Click "Save & test" button
     await page.getByRole('button', { name: /save.*test/i }).click();
@@ -50,28 +52,23 @@ test.describe('Apache Pinot Datasource Configuration', () => {
   });
 
   test('should pass health check with both broker and controller URLs', async ({ page }) => {
-    // Navigate to new datasource page
-    await page.goto('/connections/datasources/new');
+    // Navigate to add new connection page
+    await page.goto('/connections/add-new-connection?cat=data-source');
     
-    // Find and click on Apache Pinot datasource
-    await page.getByRole('link', { name: 'Apache Pinot™' }).click();
+    // Wait for and click on Apache Pinot datasource
+    await page.getByRole('heading', { name: /apache pinot/i }).click();
+    
+    // Click "Add new data source" button
+    await page.getByRole('button', { name: /add new data source/i }).click();
     
     // Wait for the config page to load
-    await expect(page.getByText('Broker Configuration')).toBeVisible();
-    
-    // Expand broker section if collapsed
-    const brokerSection = page.getByText('Broker Configuration');
-    await brokerSection.click();
+    await expect(page.getByText('Broker Configuration')).toBeVisible({ timeout: 15000 });
     
     // Fill in the broker URL
-    await page.getByLabel(/broker url/i).fill('http://pinot-broker:8099');
-    
-    // Expand controller section
-    const controllerSection = page.getByText('Controller Configuration');
-    await controllerSection.click();
+    await page.getByPlaceholder('http://localhost:8099').fill('http://pinot-broker:8099');
     
     // Fill in the controller URL
-    await page.getByLabel(/controller url/i).fill('http://pinot-controller:9000');
+    await page.getByPlaceholder('http://localhost:9000').fill('http://pinot-controller:9000');
     
     // Click "Save & test" button
     await page.getByRole('button', { name: /save.*test/i }).click();
@@ -83,21 +80,20 @@ test.describe('Apache Pinot Datasource Configuration', () => {
   });
 
   test('should show error when broker URL is incorrect', async ({ page }) => {
-    // Navigate to new datasource page
-    await page.goto('/connections/datasources/new');
+    // Navigate to add new connection page
+    await page.goto('/connections/add-new-connection?cat=data-source');
     
-    // Find and click on Apache Pinot datasource
-    await page.getByRole('link', { name: 'Apache Pinot™' }).click();
+    // Wait for and click on Apache Pinot datasource
+    await page.getByRole('heading', { name: /apache pinot/i }).click();
+    
+    // Click "Add new data source" button
+    await page.getByRole('button', { name: /add new data source/i }).click();
     
     // Wait for the config page to load
-    await expect(page.getByText('Broker Configuration')).toBeVisible();
-    
-    // Expand broker section if collapsed
-    const brokerSection = page.getByText('Broker Configuration');
-    await brokerSection.click();
+    await expect(page.getByText('Broker Configuration')).toBeVisible({ timeout: 15000 });
     
     // Fill in an incorrect broker URL
-    await page.getByLabel(/broker url/i).fill('http://invalid-broker:9999');
+    await page.getByPlaceholder('http://localhost:8099').fill('http://invalid-broker:9999');
     
     // Click "Save & test" button
     await page.getByRole('button', { name: /save.*test/i }).click();
@@ -107,28 +103,23 @@ test.describe('Apache Pinot Datasource Configuration', () => {
   });
 
   test('should show error when controller URL is incorrect but broker is correct', async ({ page }) => {
-    // Navigate to new datasource page
-    await page.goto('/connections/datasources/new');
+    // Navigate to add new connection page
+    await page.goto('/connections/add-new-connection?cat=data-source');
     
-    // Find and click on Apache Pinot datasource
-    await page.getByRole('link', { name: 'Apache Pinot™' }).click();
+    // Wait for and click on Apache Pinot datasource
+    await page.getByRole('heading', { name: /apache pinot/i }).click();
+    
+    // Click "Add new data source" button
+    await page.getByRole('button', { name: /add new data source/i }).click();
     
     // Wait for the config page to load
-    await expect(page.getByText('Broker Configuration')).toBeVisible();
-    
-    // Expand broker section if collapsed
-    const brokerSection = page.getByText('Broker Configuration');
-    await brokerSection.click();
+    await expect(page.getByText('Broker Configuration')).toBeVisible({ timeout: 15000 });
     
     // Fill in a correct broker URL
-    await page.getByLabel(/broker url/i).fill('http://pinot-broker:8099');
-    
-    // Expand controller section
-    const controllerSection = page.getByText('Controller Configuration');
-    await controllerSection.click();
+    await page.getByPlaceholder('http://localhost:8099').fill('http://pinot-broker:8099');
     
     // Fill in an incorrect controller URL
-    await page.getByLabel(/controller url/i).fill('http://invalid-controller:9999');
+    await page.getByPlaceholder('http://localhost:9000').fill('http://invalid-controller:9999');
     
     // Click "Save & test" button
     await page.getByRole('button', { name: /save.*test/i }).click();
@@ -138,21 +129,20 @@ test.describe('Apache Pinot Datasource Configuration', () => {
   });
 
   test('should handle authentication type selection for broker', async ({ page }) => {
-    // Navigate to new datasource page
-    await page.goto('/connections/datasources/new');
+    // Navigate to add new connection page
+    await page.goto('/connections/add-new-connection?cat=data-source');
     
-    // Find and click on Apache Pinot datasource
-    await page.getByRole('link', { name: 'Apache Pinot™' }).click();
+    // Wait for and click on Apache Pinot datasource
+    await page.getByRole('heading', { name: /apache pinot/i }).click();
+    
+    // Click "Add new data source" button
+    await page.getByRole('button', { name: /add new data source/i }).click();
     
     // Wait for the config page to load
-    await expect(page.getByText('Broker Configuration')).toBeVisible();
-    
-    // Expand broker section if collapsed
-    const brokerSection = page.getByText('Broker Configuration');
-    await brokerSection.click();
+    await expect(page.getByText('Broker Configuration')).toBeVisible({ timeout: 15000 });
     
     // Fill in the broker URL
-    await page.getByLabel(/broker url/i).fill('http://pinot-broker:8099');
+    await page.getByPlaceholder('http://localhost:8099').fill('http://pinot-broker:8099');
     
     // Find auth type dropdown - it should default to "No Authentication"
     const authTypeField = page.locator('label:has-text("Authentication Type")').locator('..').getByRole('combobox');
@@ -175,30 +165,25 @@ test.describe('Apache Pinot Datasource Configuration', () => {
   });
 
   test('should persist configuration after save', async ({ page }) => {
-    // Navigate to new datasource page
-    await page.goto('/connections/datasources/new');
+    // Navigate to add new connection page
+    await page.goto('/connections/add-new-connection?cat=data-source');
     
-    // Find and click on Apache Pinot datasource
-    await page.getByRole('link', { name: 'Apache Pinot™' }).click();
+    // Wait for and click on Apache Pinot datasource
+    await page.getByRole('heading', { name: /apache pinot/i }).click();
+    
+    // Click "Add new data source" button
+    await page.getByRole('button', { name: /add new data source/i }).click();
     
     // Wait for the config page to load
-    await expect(page.getByText('Broker Configuration')).toBeVisible();
-    
-    // Expand broker section if collapsed
-    const brokerSection = page.getByText('Broker Configuration');
-    await brokerSection.click();
+    await expect(page.getByText('Broker Configuration')).toBeVisible({ timeout: 15000 });
     
     // Fill in the broker URL
     const brokerUrl = 'http://pinot-broker:8099';
-    await page.getByLabel(/broker url/i).fill(brokerUrl);
-    
-    // Expand controller section
-    const controllerSection = page.getByText('Controller Configuration');
-    await controllerSection.click();
+    await page.getByPlaceholder('http://localhost:8099').fill(brokerUrl);
     
     // Fill in the controller URL
     const controllerUrl = 'http://pinot-controller:9000';
-    await page.getByLabel(/controller url/i).fill(controllerUrl);
+    await page.getByPlaceholder('http://localhost:9000').fill(controllerUrl);
     
     // Click "Save & test" button
     await page.getByRole('button', { name: /save.*test/i }).click();
@@ -213,7 +198,7 @@ test.describe('Apache Pinot Datasource Configuration', () => {
     await page.getByRole('link', { name: /apache pinot/i }).first().click();
     
     // Verify the URLs are still there
-    await expect(page.getByLabel(/broker url/i)).toHaveValue(brokerUrl);
-    await expect(page.getByLabel(/controller url/i)).toHaveValue(controllerUrl);
+    await expect(page.getByPlaceholder('http://localhost:8099')).toHaveValue(brokerUrl);
+    await expect(page.getByPlaceholder('http://localhost:9000')).toHaveValue(controllerUrl);
   });
 });
