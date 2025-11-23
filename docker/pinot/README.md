@@ -56,10 +56,27 @@ The Grafana provisioning file includes 11 datasource configurations to test vari
 
 ## Testing Authentication
 
-To test authentication:
+### Automated Validation
+
+Run the automated validation script to test all authentication scenarios:
+
+```bash
+# From the project root
+docker-compose up -d
+sleep 30  # Wait for Pinot to be ready
+./docker/validate-pinot-setup.sh
+```
+
+The validation script tests:
+- Broker health endpoint with various credentials (correct/incorrect)
+- Broker query endpoint with various credentials
+- Controller health endpoint with various credentials
+- Controller tables endpoint with various credentials
+
+### Manual Testing via Grafana
 
 1. Start the Docker containers: `docker-compose up -d`
-2. Wait for Pinot to initialize and load sample data
+2. Wait for Pinot to initialize and load sample data (about 1-2 minutes)
 3. Access Grafana at http://localhost:3000
 4. Navigate to Connections > Data sources
 5. Test each of the provisioned datasources to verify authentication behavior
@@ -68,6 +85,26 @@ Expected results:
 - Datasources 1-6 should pass health checks ✅
 - Datasources 7-10 should fail health checks with 401/403 errors ❌
 - Datasource 11 should pass health check with mixed TLS settings ✅
+
+### Command Line Testing
+
+Test authentication directly with curl:
+
+```bash
+# Test broker with admin credentials (should succeed)
+curl -u admin:admin123 http://localhost:8099/health
+
+# Test broker with wrong password (should fail)
+curl -u admin:wrongpass http://localhost:8099/health
+
+# Test controller tables endpoint
+curl -u admin:admin123 http://localhost:9000/tables
+
+# Test query endpoint
+curl -u admin:admin123 -X POST http://localhost:8099/query/sql \
+  -H "Content-Type: application/json" \
+  -d '{"sql":"SELECT 1"}'
+```
 
 ## Bootstrap Script
 
