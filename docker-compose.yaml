@@ -50,7 +50,6 @@ services:
       StartController
       -clusterName PinotCluster
       -zkAddress pinot-zookeeper:2181
-      -controllerPort 9000
       -configFileName /config/pinot-controller.conf
 
   pinot-broker:
@@ -70,7 +69,6 @@ services:
       StartBroker
       -clusterName PinotCluster
       -zkAddress pinot-zookeeper:2181
-      -brokerPort 8099
       -configFileName /config/pinot-broker.conf
 
   pinot-server:
