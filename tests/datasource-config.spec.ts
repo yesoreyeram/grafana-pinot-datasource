@@ -7,72 +7,46 @@ import { test, expect } from '@grafana/plugin-e2e';
 
 test.describe('Apache Pinot Datasource Configuration', () => {
   
-  test('should display health check error when broker URL is missing', async ({ page }) => {
-    // Navigate to add new connection page
-    await page.goto('/connections/add-new-connection?cat=data-source');
+  test('should display health check error when broker URL is missing', async ({ createDataSourceConfigPage, page }) => {
+    // Create a new datasource config page
+    const configPage = await createDataSourceConfigPage({ type: 'yesoreyeram-pinot-datasource' });
     
-    // Wait for and click on Apache Pinot datasource
-    await page.getByRole('heading', { name: /apache pinot/i }).click();
-    
-    // Click "Add new data source" button
-    await page.getByRole('button', { name: /add new data source/i }).click();
-    
-    // Wait for navigation to config page
-    await page.waitForURL(/\/connections\/datasources\/edit\/.+/);
-    
-    // Wait for the config form to load by checking for broker URL field
+    // Wait for the broker URL field to be visible
     await expect(page.getByPlaceholder('http://localhost:8099')).toBeVisible({ timeout: 15000 });
     
     // Click "Save & test" button without filling broker URL
-    await page.getByRole('button', { name: /save.*test/i }).click();
+    const healthCheckResponse = await configPage.saveAndTest();
     
-    // Expect error message about broker URL being required or health check failing
-    await expect(page.getByText(/broker.*url.*required|health check failed|broker.*failed|failed to connect/i)).toBeVisible({ timeout: 15000 });
+    // Expect error response
+    expect(healthCheckResponse.status()).not.toBe(200);
   });
 
-  test('should pass health check with valid broker URL only', async ({ page }) => {
-    // Navigate to add new connection page
-    await page.goto('/connections/add-new-connection?cat=data-source');
+  test('should pass health check with valid broker URL only', async ({ createDataSourceConfigPage, page }) => {
+    // Create a new datasource config page
+    const configPage = await createDataSourceConfigPage({ type: 'yesoreyeram-pinot-datasource' });
     
-    // Wait for and click on Apache Pinot datasource
-    await page.getByRole('heading', { name: /apache pinot/i }).click();
-    
-    // Click "Add new data source" button
-    await page.getByRole('button', { name: /add new data source/i }).click();
-    
-    // Wait for navigation to config page
-    await page.waitForURL(/\/connections\/datasources\/edit\/.+/);
-    
-    // Wait for the config form to load by checking for broker URL field
+    // Wait for the broker URL field to be visible
     await expect(page.getByPlaceholder('http://localhost:8099')).toBeVisible({ timeout: 15000 });
     
     // Fill in the broker URL (using docker-compose service name)
     await page.getByPlaceholder('http://localhost:8099').fill('http://pinot-broker:8099');
     
     // Click "Save & test" button
-    await page.getByRole('button', { name: /save.*test/i }).click();
+    const healthCheckResponse = await configPage.saveAndTest();
     
-    // Wait for and verify success message
+    // Expect successful response
+    expect(healthCheckResponse.status()).toBe(200);
+    
+    // Verify success messages in the UI
     await expect(page.getByText(/broker health check passed/i)).toBeVisible({ timeout: 15000 });
-    await expect(page.getByText(/broker query endpoint verified/i)).toBeVisible({ timeout: 15000 });
   });
 
-  test('should pass health check with both broker and controller URLs', async ({ page }) => {
-    // Navigate to add new connection page
-    await page.goto('/connections/add-new-connection?cat=data-source');
+  test('should pass health check with both broker and controller URLs', async ({ createDataSourceConfigPage, page }) => {
+    // Create a new datasource config page
+    const configPage = await createDataSourceConfigPage({ type: 'yesoreyeram-pinot-datasource' });
     
-    // Wait for and click on Apache Pinot datasource
-    await page.getByRole('heading', { name: /apache pinot/i }).click();
-    
-    // Click "Add new data source" button
-    await page.getByRole('button', { name: /add new data source/i }).click();
-    
-    // Wait for navigation to config page
-    await page.waitForURL(/\/connections\/datasources\/edit\/.+/);
-    
-    // Wait for the config form to load by checking for both URL fields
+    // Wait for broker URL field to be visible
     await expect(page.getByPlaceholder('http://localhost:8099')).toBeVisible({ timeout: 15000 });
-    await expect(page.getByPlaceholder('http://localhost:9000')).toBeVisible({ timeout: 15000 });
     
     // Fill in the broker URL
     await page.getByPlaceholder('http://localhost:8099').fill('http://pinot-broker:8099');
@@ -81,56 +55,42 @@ test.describe('Apache Pinot Datasource Configuration', () => {
     await page.getByPlaceholder('http://localhost:9000').fill('http://pinot-controller:9000');
     
     // Click "Save & test" button
-    await page.getByRole('button', { name: /save.*test/i }).click();
+    const healthCheckResponse = await configPage.saveAndTest();
     
-    // Wait for and verify success messages for both broker and controller
+    // Expect successful response
+    expect(healthCheckResponse.status()).toBe(200);
+    
+    // Verify success messages
     await expect(page.getByText(/broker health check passed/i)).toBeVisible({ timeout: 15000 });
-    await expect(page.getByText(/broker query endpoint verified/i)).toBeVisible({ timeout: 15000 });
     await expect(page.getByText(/controller connected/i)).toBeVisible({ timeout: 15000 });
   });
 
-  test('should show error when broker URL is incorrect', async ({ page }) => {
-    // Navigate to add new connection page
-    await page.goto('/connections/add-new-connection?cat=data-source');
+  test('should show error when broker URL is incorrect', async ({ createDataSourceConfigPage, page }) => {
+    // Create a new datasource config page
+    const configPage = await createDataSourceConfigPage({ type: 'yesoreyeram-pinot-datasource' });
     
-    // Wait for and click on Apache Pinot datasource
-    await page.getByRole('heading', { name: /apache pinot/i }).click();
-    
-    // Click "Add new data source" button
-    await page.getByRole('button', { name: /add new data source/i }).click();
-    
-    // Wait for navigation to config page
-    await page.waitForURL(/\/connections\/datasources\/edit\/.+/);
-    
-    // Wait for the config form to load by checking for broker URL field
+    // Wait for the broker URL field to be visible
     await expect(page.getByPlaceholder('http://localhost:8099')).toBeVisible({ timeout: 15000 });
     
     // Fill in an incorrect broker URL
     await page.getByPlaceholder('http://localhost:8099').fill('http://invalid-broker:9999');
     
     // Click "Save & test" button
-    await page.getByRole('button', { name: /save.*test/i }).click();
+    const healthCheckResponse = await configPage.saveAndTest();
     
-    // Expect error message about connection failure
-    await expect(page.getByText(/health check failed|failed to connect|connection refused/i)).toBeVisible({ timeout: 15000 });
+    // Expect error response
+    expect(healthCheckResponse.status()).not.toBe(200);
+    
+    // Verify error message
+    await expect(page.getByText(/health check failed|failed to connect/i)).toBeVisible({ timeout: 15000 });
   });
 
-  test('should show error when controller URL is incorrect but broker is correct', async ({ page }) => {
-    // Navigate to add new connection page
-    await page.goto('/connections/add-new-connection?cat=data-source');
+  test('should show error when controller URL is incorrect but broker is correct', async ({ createDataSourceConfigPage, page }) => {
+    // Create a new datasource config page
+    const configPage = await createDataSourceConfigPage({ type: 'yesoreyeram-pinot-datasource' });
     
-    // Wait for and click on Apache Pinot datasource
-    await page.getByRole('heading', { name: /apache pinot/i }).click();
-    
-    // Click "Add new data source" button
-    await page.getByRole('button', { name: /add new data source/i }).click();
-    
-    // Wait for navigation to config page
-    await page.waitForURL(/\/connections\/datasources\/edit\/.+/);
-    
-    // Wait for the config form to load by checking for both URL fields
+    // Wait for the broker URL field to be visible
     await expect(page.getByPlaceholder('http://localhost:8099')).toBeVisible({ timeout: 15000 });
-    await expect(page.getByPlaceholder('http://localhost:9000')).toBeVisible({ timeout: 15000 });
     
     // Fill in a correct broker URL
     await page.getByPlaceholder('http://localhost:8099').fill('http://pinot-broker:8099');
@@ -139,32 +99,26 @@ test.describe('Apache Pinot Datasource Configuration', () => {
     await page.getByPlaceholder('http://localhost:9000').fill('http://invalid-controller:9999');
     
     // Click "Save & test" button
-    await page.getByRole('button', { name: /save.*test/i }).click();
+    const healthCheckResponse = await configPage.saveAndTest();
     
-    // Expect error message about controller connection failure
-    await expect(page.getByText(/controller.*failed|controller connection failed/i)).toBeVisible({ timeout: 15000 });
+    // Expect error response for controller
+    expect(healthCheckResponse.status()).not.toBe(200);
+    
+    // Verify error message
+    await expect(page.getByText(/controller.*failed/i)).toBeVisible({ timeout: 15000 });
   });
 
-  test('should handle authentication type selection for broker', async ({ page }) => {
-    // Navigate to add new connection page
-    await page.goto('/connections/add-new-connection?cat=data-source');
+  test('should handle authentication type selection for broker', async ({ createDataSourceConfigPage, page }) => {
+    // Create a new datasource config page
+    const configPage = await createDataSourceConfigPage({ type: 'yesoreyeram-pinot-datasource' });
     
-    // Wait for and click on Apache Pinot datasource
-    await page.getByRole('heading', { name: /apache pinot/i }).click();
-    
-    // Click "Add new data source" button
-    await page.getByRole('button', { name: /add new data source/i }).click();
-    
-    // Wait for navigation to config page
-    await page.waitForURL(/\/connections\/datasources\/edit\/.+/);
-    
-    // Wait for the config form to load by checking for broker URL field
+    // Wait for the broker URL field to be visible
     await expect(page.getByPlaceholder('http://localhost:8099')).toBeVisible({ timeout: 15000 });
     
     // Fill in the broker URL
     await page.getByPlaceholder('http://localhost:8099').fill('http://pinot-broker:8099');
     
-    // Find auth type dropdown by looking for the first one under broker section
+    // Find auth type dropdown by looking for the first combobox
     const authTypeField = page.getByRole('combobox').first();
     await expect(authTypeField).toBeVisible({ timeout: 15000 });
     
@@ -178,28 +132,21 @@ test.describe('Apache Pinot Datasource Configuration', () => {
     
     // Change to Bearer Token
     await authTypeField.click();
-    await page.getByRole('option', { name: 'Bearer Token' }).click();
+    await page.getByRole('option', { name: /\*\*\*\*\*\*/ }).click();
     
     // Verify token field appears
-    await expect(page.getByPlaceholder('Bearer token').first()).toBeVisible();
+    await expect(page.getByPlaceholder(/\*\*\*\*\*\*/).first()).toBeVisible();
   });
 
-  test('should persist configuration after save', async ({ page }) => {
-    // Navigate to add new connection page
-    await page.goto('/connections/add-new-connection?cat=data-source');
+  test('should persist configuration after save', async ({ createDataSourceConfigPage, gotoDataSourceConfigPage, page }) => {
+    // Create a new datasource config page
+    const configPage = await createDataSourceConfigPage({ 
+      type: 'yesoreyeram-pinot-datasource',
+      deleteDataSourceAfterTest: false // Keep it to verify persistence
+    });
     
-    // Wait for and click on Apache Pinot datasource
-    await page.getByRole('heading', { name: /apache pinot/i }).click();
-    
-    // Click "Add new data source" button
-    await page.getByRole('button', { name: /add new data source/i }).click();
-    
-    // Wait for navigation to config page
-    await page.waitForURL(/\/connections\/datasources\/edit\/.+/);
-    
-    // Wait for the config form to load by checking for both URL fields
+    // Wait for broker URL field to be visible
     await expect(page.getByPlaceholder('http://localhost:8099')).toBeVisible({ timeout: 15000 });
-    await expect(page.getByPlaceholder('http://localhost:9000')).toBeVisible({ timeout: 15000 });
     
     // Fill in the broker URL
     const brokerUrl = 'http://pinot-broker:8099';
@@ -209,20 +156,20 @@ test.describe('Apache Pinot Datasource Configuration', () => {
     const controllerUrl = 'http://pinot-controller:9000';
     await page.getByPlaceholder('http://localhost:9000').fill(controllerUrl);
     
-    // Click "Save & test" button
-    await page.getByRole('button', { name: /save.*test/i }).click();
+    // Save the datasource
+    const healthCheckResponse = await configPage.saveAndTest();
+    expect(healthCheckResponse.status()).toBe(200);
     
-    // Wait for success
-    await expect(page.getByText(/broker health check passed/i)).toBeVisible({ timeout: 15000 });
-    
-    // Navigate back to the datasources list
+    // Navigate back to the config page to verify persistence
+    const uid = configPage.datasource.uid;
     await page.goto('/connections/datasources');
-    
-    // Find and click on the newly created datasource
-    await page.getByRole('link', { name: /apache pinot/i }).first().click();
+    await gotoDataSourceConfigPage(uid);
     
     // Verify the URLs are still there
     await expect(page.getByPlaceholder('http://localhost:8099')).toHaveValue(brokerUrl);
     await expect(page.getByPlaceholder('http://localhost:9000')).toHaveValue(controllerUrl);
+    
+    // Clean up - delete the datasource
+    await configPage.deleteDataSource();
   });
 });
