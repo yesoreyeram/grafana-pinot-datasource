@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { DataSourcePlugin } from '@grafana/data';
 import { plugin } from './module';
@@ -90,11 +90,13 @@ const defaultOptions = {
   name: 'Test Pinot',
   type: 'yesoreyeram-pinot-datasource',
   typeName: 'Apache Pinot',
+  typeLogoUrl: '',
   access: 'proxy',
   url: '',
   user: '',
   database: '',
   basicAuth: false,
+  basicAuthUser: '',
   isDefault: false,
   jsonData: {},
   secureJsonFields: {},
@@ -122,7 +124,7 @@ describe('ConfigEditor', () => {
   });
 
   it('should render broker URL field', () => {
-    const ConfigEditor = plugin.components.ConfigEditor;
+    const ConfigEditor = plugin.components.ConfigEditor!;
     render(
       <ConfigEditor options={defaultOptions} onOptionsChange={mockOnOptionsChange} />
     );
@@ -135,7 +137,7 @@ describe('ConfigEditor', () => {
   });
 
   it('should update broker URL when changed', () => {
-    const ConfigEditor = plugin.components.ConfigEditor;
+    const ConfigEditor = plugin.components.ConfigEditor!;
     render(
       <ConfigEditor options={defaultOptions} onOptionsChange={mockOnOptionsChange} />
     );
@@ -159,7 +161,7 @@ describe('ConfigEditor', () => {
   });
 
   it('should render authentication type selector', () => {
-    const ConfigEditor = plugin.components.ConfigEditor;
+    const ConfigEditor = plugin.components.ConfigEditor!;
     render(
       <ConfigEditor options={defaultOptions} onOptionsChange={mockOnOptionsChange} />
     );
@@ -173,12 +175,12 @@ describe('ConfigEditor', () => {
       ...defaultOptions,
       jsonData: {
         broker: {
-          authType: 'basic',
+          authType: 'basic' as const,
         },
       },
     };
 
-    const ConfigEditor = plugin.components.ConfigEditor;
+    const ConfigEditor = plugin.components.ConfigEditor!;
     render(
       <ConfigEditor options={optionsWithBasicAuth} onOptionsChange={mockOnOptionsChange} />
     );
@@ -195,12 +197,12 @@ describe('ConfigEditor', () => {
       ...defaultOptions,
       jsonData: {
         broker: {
-          authType: 'bearer',
+          authType: 'bearer' as const,
         },
       },
     };
 
-    const ConfigEditor = plugin.components.ConfigEditor;
+    const ConfigEditor = plugin.components.ConfigEditor!;
     render(
       <ConfigEditor options={optionsWithBearerAuth} onOptionsChange={mockOnOptionsChange} />
     );
@@ -214,12 +216,12 @@ describe('ConfigEditor', () => {
       ...defaultOptions,
       jsonData: {
         broker: {
-          authType: 'basic',
+          authType: 'basic' as const,
         },
       },
     };
 
-    const ConfigEditor = plugin.components.ConfigEditor;
+    const ConfigEditor = plugin.components.ConfigEditor!;
     render(
       <ConfigEditor options={optionsWithBasicAuth} onOptionsChange={mockOnOptionsChange} />
     );
@@ -243,7 +245,7 @@ describe('ConfigEditor', () => {
   });
 
   it('should render TLS skip verify checkbox', () => {
-    const ConfigEditor = plugin.components.ConfigEditor;
+    const ConfigEditor = plugin.components.ConfigEditor!;
     render(
       <ConfigEditor options={defaultOptions} onOptionsChange={mockOnOptionsChange} />
     );
@@ -253,7 +255,7 @@ describe('ConfigEditor', () => {
   });
 
   it('should update TLS skip verify when checkbox is changed', () => {
-    const ConfigEditor = plugin.components.ConfigEditor;
+    const ConfigEditor = plugin.components.ConfigEditor!;
     render(
       <ConfigEditor options={defaultOptions} onOptionsChange={mockOnOptionsChange} />
     );
@@ -275,7 +277,7 @@ describe('ConfigEditor', () => {
   });
 
   it('should have controller section in the UI', () => {
-    const ConfigEditor = plugin.components.ConfigEditor;
+    const ConfigEditor = plugin.components.ConfigEditor!;
     render(
       <ConfigEditor options={defaultOptions} onOptionsChange={mockOnOptionsChange} />
     );
@@ -294,12 +296,12 @@ describe('ConfigEditor', () => {
       jsonData: {
         controller: {
           url: 'http://localhost:9000',
-          authType: 'basic',
+          authType: 'basic' as const,
         },
       },
     };
 
-    const ConfigEditor = plugin.components.ConfigEditor;
+    const ConfigEditor = plugin.components.ConfigEditor!;
     render(
       <ConfigEditor options={optionsWithController} onOptionsChange={mockOnOptionsChange} />
     );
@@ -310,7 +312,7 @@ describe('ConfigEditor', () => {
   });
 
   it('should handle switching authentication types', () => {
-    const ConfigEditor = plugin.components.ConfigEditor;
+    const ConfigEditor = plugin.components.ConfigEditor!;
     render(
       <ConfigEditor options={defaultOptions} onOptionsChange={mockOnOptionsChange} />
     );
@@ -343,7 +345,7 @@ describe('ConfigEditor', () => {
       },
     };
 
-    const ConfigEditor = plugin.components.ConfigEditor;
+    const ConfigEditor = plugin.components.ConfigEditor!;
     render(
       <ConfigEditor options={existingOptions} onOptionsChange={mockOnOptionsChange} />
     );
@@ -367,8 +369,20 @@ describe('ConfigEditor', () => {
 
 describe('QueryEditor', () => {
   it('should render query editor', () => {
-    const QueryEditor = plugin.components.QueryEditor;
-    const { container } = render(<QueryEditor />);
+    const QueryEditor = plugin.components.QueryEditor!;
+    const mockDatasource = {} as any;
+    const mockQuery = { refId: 'A' } as any;
+    const mockOnRunQuery = jest.fn();
+    const mockOnChange = jest.fn();
+    
+    const { container } = render(
+      <QueryEditor 
+        datasource={mockDatasource}
+        query={mockQuery}
+        onRunQuery={mockOnRunQuery}
+        onChange={mockOnChange}
+      />
+    );
     
     expect(container).toHaveTextContent('Apache Pinot™ Query Editor');
   });
@@ -381,7 +395,7 @@ describe('Configuration Types', () => {
       jsonData: undefined as any,
     };
 
-    const ConfigEditor = plugin.components.ConfigEditor;
+    const ConfigEditor = plugin.components.ConfigEditor!;
     const { container } = render(
       <ConfigEditor options={optionsWithoutJsonData} onOptionsChange={mockOnOptionsChange} />
     );
@@ -390,7 +404,7 @@ describe('Configuration Types', () => {
   });
 
   it('should handle undefined broker config gracefully', () => {
-    const ConfigEditor = plugin.components.ConfigEditor;
+    const ConfigEditor = plugin.components.ConfigEditor!;
     const { container } = render(
       <ConfigEditor options={defaultOptions} onOptionsChange={mockOnOptionsChange} />
     );
