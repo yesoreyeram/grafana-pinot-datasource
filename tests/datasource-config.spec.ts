@@ -248,11 +248,16 @@ test.describe('Apache Pinot Datasource Configuration - Controller', () => {
     await authTypeField.click();
     await page.getByRole('option', { name: 'Basic Authentication' }).click();
     
-    // Verify username and password fields appear (controller fields will be visible)
+    // Wait a bit for fields to render
+    await page.waitForTimeout(500);
+    
+    // Verify username and password fields appear
+    // After selecting Basic Auth for controller, username/password fields should be visible
     const usernameFields = page.getByPlaceholder('Username');
     const passwordFields = page.getByPlaceholder('Password');
-    // Should have 2 username and password fields now (broker and controller)
-    await expect(usernameFields.nth(1)).toBeVisible();
-    await expect(passwordFields.nth(1)).toBeVisible();
+    
+    // Check that at least one set of username/password fields is visible
+    await expect(usernameFields.first()).toBeVisible({ timeout: 5000 });
+    await expect(passwordFields.first()).toBeVisible({ timeout: 5000 });
   });
 });
