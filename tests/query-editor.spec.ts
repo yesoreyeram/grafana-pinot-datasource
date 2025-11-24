@@ -3,6 +3,7 @@ import { test, expect } from '@grafana/plugin-e2e';
 /**
  * E2E tests for Apache Pinot datasource query editor
  * Tests the query editor functionality and query execution
+ * Includes screenshots for documentation
  */
 
 test.describe('Apache Pinot Query Editor - Basic Functionality', () => {
@@ -40,6 +41,12 @@ test.describe('Apache Pinot Query Editor - Basic Functionality', () => {
     // The query editor should have format selector
     const formatSelectors = page.locator('select').filter({ hasText: /time series|table/i });
     await expect(formatSelectors.first()).toBeVisible({ timeout: 10000 });
+    
+    // Take screenshot of query editor interface
+    await page.screenshot({ 
+      path: 'docs/images/query-editor-interface.png',
+      fullPage: false
+    });
   });
 
   test('should execute a simple SELECT query', async ({ explorePage, page }) => {
@@ -259,6 +266,231 @@ test.describe('Apache Pinot Query Editor - Real Data Queries', () => {
     const errorElements = page.locator('[role="alert"]').filter({ hasText: /error|failed/i });
     const errorCount = await errorElements.count();
     expect(errorCount).toBe(0);
+  });
+
+  test.afterAll(async ({ gotoDataSourceConfigPage, page }) => {
+    if (datasourceUid) {
+      await gotoDataSourceConfigPage(datasourceUid);
+      await page.waitForTimeout(1000);
+
+      const deleteButton = page.getByRole('button', { name: /delete/i });
+      if (await deleteButton.isVisible({ timeout: 5000 }).catch(() => false)) {
+        await deleteButton.click();
+        const confirmButton = page.getByRole('button', { name: /confirm|yes|delete/i });
+        if (await confirmButton.isVisible({ timeout: 3000 }).catch(() => false)) {
+          await confirmButton.click();
+        }
+      }
+    }
+  });
+});
+
+test.describe('Apache Pinot Query Editor - Time Series with Macros', () => {
+  let datasourceUid: string;
+
+  test.beforeAll(async ({ createDataSourceConfigPage }) => {
+    const configPage = await createDataSourceConfigPage({
+      type: 'yesoreyeram-pinot-datasource',
+      deleteDataSourceAfterTest: false,
+    });
+
+    const page = configPage.page;
+    await expect(page.getByPlaceholder('http://localhost:8099')).toBeVisible({ timeout: 15000 });
+    await page.getByPlaceholder('http://localhost:8099').fill('http://pinot-broker:8099');
+    
+    await page.getByText('Controller Configuration (Optional)').click();
+    await expect(page.getByPlaceholder('http://localhost:9000')).toBeVisible({ timeout: 15000 });
+    await page.getByPlaceholder('http://localhost:9000').fill('http://pinot-controller:9000');
+
+    const healthCheckResponse = await configPage.saveAndTest();
+    expect(healthCheckResponse.status()).toBe(200);
+
+    datasourceUid = configPage.datasource.uid;
+  });
+
+  test('should execute time series query with $__timeFilter macro', async ({ explorePage, page }) => {
+    await explorePage.datasource.set(datasourceUid);
+    await page.waitForTimeout(1000);
+
+    // Switch to timeseries format
+    const formatSelector = page.locator('select').filter({ hasText: /time series|table/i }).first();
+    await formatSelector.selectOption('timeseries');
+    
+    // Set time column
+    const timeColumnInput = page.getByPlaceholder(/timestamp|created_at/i);
+    await timeColumnInput.fill('timestamp');
+
+    // Enter time series query with macro
+    const query = 'SELECT timestamp, AVG(value) as avg_value FROM metricsTimeseries WHERE $__timeFilter(timestamp) GROUP BY timestamp ORDER BY timestamp LIMIT 100';
+    
+    const codeEditor = page.locator('[data-testid="data-testid Code editor container"]').first();
+    if (await codeEditor.isVisible({ timeout: 5000 }).catch(() => false)) {
+      await codeEditor.click();
+      await page.keyboard.press('Control+A');
+      await page.keyboard.type(query);
+    } else {
+      const textarea = page.locator('textarea').first();
+      await expect(textarea).toBeVisible({ timeout: 10000 });
+      await textarea.fill(query);
+    }
+
+    // Take screenshot of time series query
+    await page.screenshot({ 
+      path: 'docs/images/timeseries-query-with-macro.png',
+      fullPage: false
+    });
+
+    // Run query
+    await explorePage.runQuery();
+    await page.waitForTimeout(3000);
+
+    // Check for success (no errors)
+    const errorElements = page.locator('[role="alert"]').filter({ hasText: /error|failed/i });
+    const errorCount = await errorElements.count();
+    expect(errorCount).toBe(0);
+    
+    // Take screenshot of results
+    await page.screenshot({ 
+      path: 'docs/images/timeseries-query-results.png',
+      fullPage: true
+    });
+  });
+
+  test('should execute query with $__timeFrom and $__timeTo macros', async ({ explorePage, page }) => {
+    await explorePage.datasource.set(datasourceUid);
+    await page.waitForTimeout(1000);
+
+    // Enter query with individual time macros
+    const query = 'SELECT timestamp, metric_name, value FROM metricsTimeseries WHERE timestamp >= $__timeFrom AND timestamp < $__timeTo LIMIT 50';
+    
+    const codeEditor = page.locator('[data-testid="data-testid Code editor container"]').first();
+    if (await codeEditor.isVisible({ timeout: 5000 }).catch(() => false)) {
+      await codeEditor.click();
+      await page.keyboard.press('Control+A');
+      await page.keyboard.type(query);
+    } else {
+      const textarea = page.locator('textarea').first();
+      await expect(textarea).toBeVisible({ timeout: 10000 });
+      await textarea.fill(query);
+    }
+
+    await explorePage.runQuery();
+    await page.waitForTimeout(3000);
+
+    const errorElements = page.locator('[role="alert"]').filter({ hasText: /error|failed/i });
+    const errorCount = await errorElements.count();
+    expect(errorCount).toBe(0);
+  });
+
+  test('should handle aggregation over time with metrics', async ({ explorePage, page }) => {
+    await explorePage.datasource.set(datasourceUid);
+    await page.waitForTimeout(1000);
+
+    // Switch to timeseries format
+    const formatSelector = page.locator('select').filter({ hasText: /time series|table/i }).first();
+    await formatSelector.selectOption('timeseries');
+    
+    const timeColumnInput = page.getByPlaceholder(/timestamp|created_at/i);
+    await timeColumnInput.fill('timestamp');
+
+    // Complex aggregation query
+    const query = `SELECT 
+      timestamp, 
+      metric_name,
+      AVG(value) as avg_value,
+      MAX(value) as max_value,
+      MIN(value) as min_value
+    FROM metricsTimeseries 
+    WHERE $__timeFilter(timestamp) 
+      AND metric_name = 'cpu_usage'
+    GROUP BY timestamp, metric_name 
+    ORDER BY timestamp 
+    LIMIT 100`;
+    
+    const codeEditor = page.locator('[data-testid="data-testid Code editor container"]').first();
+    if (await codeEditor.isVisible({ timeout: 5000 }).catch(() => false)) {
+      await codeEditor.click();
+      await page.keyboard.press('Control+A');
+      await page.keyboard.type(query);
+    } else {
+      const textarea = page.locator('textarea').first();
+      await expect(textarea).toBeVisible({ timeout: 10000 });
+      await textarea.fill(query);
+    }
+
+    // Take screenshot of complex query
+    await page.screenshot({ 
+      path: 'docs/images/timeseries-aggregation-query.png',
+      fullPage: false
+    });
+
+    await explorePage.runQuery();
+    await page.waitForTimeout(3000);
+
+    const errorElements = page.locator('[role="alert"]').filter({ hasText: /error|failed/i });
+    const errorCount = await errorElements.count();
+    expect(errorCount).toBe(0);
+  });
+
+  test('should handle null values in time series', async ({ explorePage, page }) => {
+    await explorePage.datasource.set(datasourceUid);
+    await page.waitForTimeout(1000);
+
+    // Query that may have nulls (10% of data has nulls)
+    const query = 'SELECT timestamp, host, value FROM metricsTimeseries WHERE $__timeFilter(timestamp) ORDER BY timestamp LIMIT 100';
+    
+    const codeEditor = page.locator('[data-testid="data-testid Code editor container"]').first();
+    if (await codeEditor.isVisible({ timeout: 5000 }).catch(() => false)) {
+      await codeEditor.click();
+      await page.keyboard.press('Control+A');
+      await page.keyboard.type(query);
+    } else {
+      const textarea = page.locator('textarea').first();
+      await expect(textarea).toBeVisible({ timeout: 10000 });
+      await textarea.fill(query);
+    }
+
+    await explorePage.runQuery();
+    await page.waitForTimeout(3000);
+
+    // Should handle nulls gracefully without errors
+    const errorElements = page.locator('[role="alert"]').filter({ hasText: /error|failed/i });
+    const errorCount = await errorElements.count();
+    expect(errorCount).toBe(0);
+  });
+
+  test('should handle query with invalid syntax (failure test)', async ({ explorePage, page }) => {
+    await explorePage.datasource.set(datasourceUid);
+    await page.waitForTimeout(1000);
+
+    // Invalid SQL query
+    const query = 'SELECT * FROM nonexistent_table WHERE invalid syntax here';
+    
+    const codeEditor = page.locator('[data-testid="data-testid Code editor container"]').first();
+    if (await codeEditor.isVisible({ timeout: 5000 }).catch(() => false)) {
+      await codeEditor.click();
+      await page.keyboard.press('Control+A');
+      await page.keyboard.type(query);
+    } else {
+      const textarea = page.locator('textarea').first();
+      await expect(textarea).toBeVisible({ timeout: 10000 });
+      await textarea.fill(query);
+    }
+
+    await explorePage.runQuery();
+    await page.waitForTimeout(3000);
+
+    // Should show error
+    const hasError = await page.locator('[role="alert"]').isVisible({ timeout: 5000 }).catch(() => false);
+    const hasErrorInResults = await page.locator('text=/error|failed|not found/i').isVisible({ timeout: 5000 }).catch(() => false);
+    
+    expect(hasError || hasErrorInResults).toBe(true);
+    
+    // Take screenshot of error
+    await page.screenshot({ 
+      path: 'docs/images/query-error-example.png',
+      fullPage: false
+    });
   });
 
   test.afterAll(async ({ gotoDataSourceConfigPage, page }) => {
