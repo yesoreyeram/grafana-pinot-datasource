@@ -445,8 +445,11 @@ func applyMacros(sql string, timeRange backend.TimeRange) string {
 		columnName := sql[startIdx+len(filterPattern) : endIdx]
 		columnName = strings.TrimSpace(columnName)
 		
+		// Quote column name to handle reserved keywords (e.g., "timestamp")
+		quotedColumn := fmt.Sprintf("\"%s\"", columnName)
+		
 		// Create the replacement filter
-		replacement := fmt.Sprintf("%s >= %d AND %s < %d", columnName, fromMs, columnName, toMs)
+		replacement := fmt.Sprintf("%s >= %d AND %s < %d", quotedColumn, fromMs, quotedColumn, toMs)
 		
 		// Replace in SQL
 		sql = sql[:startIdx] + replacement + sql[endIdx+1:]
