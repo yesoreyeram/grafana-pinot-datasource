@@ -50,15 +50,15 @@ You can add additional datasources through the Grafana UI:
 
 The `docker/pinot` folder contains the full definition of the demo tables so you can tweak schemas, table configs, and ingestion jobs:
 
-- `airlineStats_OFFLINE`: simple flight punctuality metrics keyed by carrier and route.
-- `baseballStats_OFFLINE`: 2022 season hitting stats for a handful of MLB players.
+- `airlineStats`: Simple flight punctuality metrics keyed by carrier and route
+- `baseballStats`: 2022 season hitting stats for a handful of MLB players  
+- `ecommerce_*`: E-commerce data with customers, products, orders, and order items
 
 Each dataset ships with:
 
 - `schema.json` – Pinot schema definition
 - `table.json` – table configuration (offline tables with replication factor 1)
 - `data/*.json` – newline-delimited JSON samples loaded via the ingestion job
-- `ingestion-job.yaml` – `pinot-admin.sh LaunchDataIngestionJob` spec describing how to build/upload segments
 
 To re-run ingestion after editing any of these files:
 
@@ -67,6 +67,92 @@ docker compose run --rm pinot-init
 ```
 
 That command retries table creation and segment uploads against the running controller.
+
+## Querying Data
+
+### Query Editor
+
+The plugin provides a full-featured SQL query editor with two modes:
+
+1. **Raw SQL Mode** (Code): Write SQL queries directly with syntax highlighting
+2. **Query Builder Mode**: Visual query builder with table/column selection (requires controller configuration)
+
+![Query Editor](docs/images/query-editor.png)
+
+### Format Options
+
+- **Table**: Display results in tabular format (default)
+- **Time series**: Display results as time series data
+  - Requires specifying a time column containing timestamp data
+  - Timestamps should be in milliseconds (Pinot standard)
+
+### Query Examples
+
+**Simple SELECT query**:
+```sql
+SELECT Origin, Dest, COUNT(*) as flight_count 
+FROM airlineStats 
+GROUP BY Origin, Dest 
+LIMIT 10
+```
+
+**Time series query**:
+```sql
+SELECT created_at, SUM(total) as revenue
+FROM ecommerce_orders
+WHERE created_at > 1638360000000
+GROUP BY created_at
+ORDER BY created_at
+```
+
+**JOIN query**:
+```sql
+SELECT o.order_id, o.total, c.name
+FROM ecommerce_orders o
+JOIN ecommerce_customers c ON o.customer_id = c.customer_id
+LIMIT 20
+```
+
+**Aggregation with window functions**:
+```sql
+SELECT 
+  user_id, 
+  order_date, 
+  total,
+  ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY order_date) as order_number
+FROM ecommerce_orders
+```
+
+### Query Builder (Requires Controller)
+
+When the controller URL is configured, the query builder provides:
+
+- **Table selection**: Browse available tables from the dropdown
+- **Column autocomplete**: Select columns with data type information
+- **Visual filters**: Build WHERE clauses visually
+- **Aggregation functions**: COUNT, SUM, AVG, MIN, MAX support
+- **GROUP BY**: Visual group by clause builder
+
+The query builder automatically fetches:
+- Available tables via `GET /tables`
+- Table schemas via `GET /tables/{tableName}/schema`
+
+### Supported Data Types
+
+The plugin supports all Apache Pinot data types:
+
+| Pinot Type | Grafana Type | Notes |
+|------------|--------------|-------|
+| INT | int64 | Integer values |
+| LONG | int64 | Long integer values |
+| FLOAT | float64 | Single precision floating point |
+| DOUBLE | float64 | Double precision floating point |
+| BOOLEAN | bool | Boolean values |
+| TIMESTAMP | time.Time | Millisecond precision timestamps |
+| STRING | string | Text values |
+| BYTES | string | Base64 encoded binary data |
+| JSON | string | JSON formatted strings |
+
 
 ## Configuration Options
 
