@@ -20,7 +20,6 @@
   "graphTooltip": 0,
   "id": null,
   "links": [],
-  "liveNow": false,
   "panels": [
     {
       "datasource": {
@@ -38,7 +37,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               }
             ]
           },
@@ -58,14 +57,15 @@
         "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         },
-        "textMode": "auto"
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
       },
       "pluginVersion": "12.2.1",
       "targets": [
@@ -75,7 +75,7 @@
             "uid": "pinot_default"
           },
           "format": "table",
-          "rawSql": "SELECT SUM(final_amount) as total_revenue FROM ecommerce_transactions WHERE $__timeFilter(timestamp) AND status = 'completed'",
+          "rawSql": "SELECT SUM(final_amount) as total_revenue FROM ecommerce_transactions WHERE $__timeFilter(\"timestamp\") AND status = 'completed'",
           "refId": "A"
         }
       ],
@@ -98,7 +98,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               }
             ]
           }
@@ -117,14 +117,15 @@
         "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         },
-        "textMode": "auto"
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
       },
       "pluginVersion": "12.2.1",
       "targets": [
@@ -134,7 +135,7 @@
             "uid": "pinot_default"
           },
           "format": "table",
-          "rawSql": "SELECT COUNT(*) as total_orders FROM ecommerce_transactions WHERE $__timeFilter(timestamp)",
+          "rawSql": "SELECT COUNT(*) as total_orders FROM ecommerce_transactions WHERE $__timeFilter(\"timestamp\")",
           "refId": "A"
         }
       ],
@@ -157,7 +158,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               }
             ]
           },
@@ -177,14 +178,15 @@
         "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         },
-        "textMode": "auto"
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
       },
       "pluginVersion": "12.2.1",
       "targets": [
@@ -194,7 +196,7 @@
             "uid": "pinot_default"
           },
           "format": "table",
-          "rawSql": "SELECT AVG(final_amount) as avg_order_value FROM ecommerce_transactions WHERE $__timeFilter(timestamp) AND status = 'completed'",
+          "rawSql": "SELECT AVG(final_amount) as avg_order_value FROM ecommerce_transactions WHERE $__timeFilter(\"timestamp\") AND status = 'completed'",
           "refId": "A"
         }
       ],
@@ -217,7 +219,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               }
             ]
           }
@@ -236,14 +238,15 @@
         "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         },
-        "textMode": "auto"
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
       },
       "pluginVersion": "12.2.1",
       "targets": [
@@ -253,7 +256,7 @@
             "uid": "pinot_default"
           },
           "format": "table",
-          "rawSql": "SELECT COUNT(DISTINCT customer_id) as unique_customers FROM ecommerce_transactions WHERE $__timeFilter(timestamp)",
+          "rawSql": "SELECT COUNT(DISTINCT customer_id) as unique_customers FROM ecommerce_transactions WHERE $__timeFilter(\"timestamp\")",
           "refId": "A"
         }
       ],
@@ -271,19 +274,22 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 10,
             "gradientMode": "none",
             "hideFrom": {
+              "legend": false,
               "tooltip": false,
-              "viz": false,
-              "legend": false
+              "viz": false
             },
+            "insertNulls": false,
             "lineInterpolation": "smooth",
             "lineWidth": 2,
             "pointSize": 5,
@@ -291,6 +297,7 @@
               "type": "linear"
             },
             "showPoints": "never",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -306,7 +313,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               }
             ]
           },
@@ -329,6 +336,7 @@
           "showLegend": true
         },
         "tooltip": {
+          "hideZeros": false,
           "mode": "single",
           "sort": "none"
         }
@@ -341,7 +349,7 @@
             "uid": "pinot_default"
           },
           "format": "timeseries",
-          "rawSql": "SELECT \"timestamp\", SUM(final_amount) as revenue FROM ecommerce_transactions WHERE $__timeFilter(timestamp) AND status = 'completed' GROUP BY \"timestamp\" ORDER BY \"timestamp\"",
+          "rawSql": "SELECT \"timestamp\", SUM(final_amount) as revenue FROM ecommerce_transactions WHERE $__timeFilter(\"timestamp\") AND status = 'completed' GROUP BY \"timestamp\" ORDER BY \"timestamp\"",
           "refId": "A",
           "timeColumn": "timestamp"
         }
@@ -360,19 +368,22 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 10,
             "gradientMode": "none",
             "hideFrom": {
+              "legend": false,
               "tooltip": false,
-              "viz": false,
-              "legend": false
+              "viz": false
             },
+            "insertNulls": false,
             "lineInterpolation": "smooth",
             "lineWidth": 2,
             "pointSize": 5,
@@ -380,6 +391,7 @@
               "type": "linear"
             },
             "showPoints": "never",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -395,7 +407,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               }
             ]
           }
@@ -417,6 +429,7 @@
           "showLegend": true
         },
         "tooltip": {
+          "hideZeros": false,
           "mode": "single",
           "sort": "none"
         }
@@ -429,7 +442,7 @@
             "uid": "pinot_default"
           },
           "format": "timeseries",
-          "rawSql": "SELECT \"timestamp\", COUNT(*) as orders FROM ecommerce_transactions WHERE $__timeFilter(timestamp) GROUP BY \"timestamp\" ORDER BY \"timestamp\"",
+          "rawSql": "SELECT \"timestamp\", COUNT(*) as orders FROM ecommerce_transactions WHERE $__timeFilter(\"timestamp\") GROUP BY \"timestamp\" ORDER BY \"timestamp\"",
           "refId": "A",
           "timeColumn": "timestamp"
         }
@@ -449,9 +462,9 @@
           },
           "custom": {
             "hideFrom": {
+              "legend": false,
               "tooltip": false,
-              "viz": false,
-              "legend": false
+              "viz": false
             }
           },
           "mappings": []
@@ -470,13 +483,17 @@
           "displayMode": "table",
           "placement": "right",
           "showLegend": true,
-          "values": [
-            "value",
-            "percent"
-          ]
+          "values": ["value", "percent"]
         },
         "pieType": "pie",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "sort": "desc",
         "tooltip": {
+          "hideZeros": false,
           "mode": "single",
           "sort": "none"
         }
@@ -489,7 +506,7 @@
             "uid": "pinot_default"
           },
           "format": "table",
-          "rawSql": "SELECT category, SUM(final_amount) as revenue FROM ecommerce_transactions WHERE $__timeFilter(timestamp) AND status = 'completed' GROUP BY category ORDER BY revenue DESC LIMIT 10",
+          "rawSql": "SELECT category, SUM(final_amount) as revenue FROM ecommerce_transactions WHERE $__timeFilter(\"timestamp\") AND status = 'completed' GROUP BY category ORDER BY revenue DESC LIMIT 10",
           "refId": "A"
         }
       ],
@@ -508,9 +525,9 @@
           },
           "custom": {
             "hideFrom": {
+              "legend": false,
               "tooltip": false,
-              "viz": false,
-              "legend": false
+              "viz": false
             }
           },
           "mappings": []
@@ -529,13 +546,17 @@
           "displayMode": "table",
           "placement": "right",
           "showLegend": true,
-          "values": [
-            "value",
-            "percent"
-          ]
+          "values": ["value", "percent"]
         },
         "pieType": "donut",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "sort": "desc",
         "tooltip": {
+          "hideZeros": false,
           "mode": "single",
           "sort": "none"
         }
@@ -548,7 +569,7 @@
             "uid": "pinot_default"
           },
           "format": "table",
-          "rawSql": "SELECT region, SUM(final_amount) as revenue FROM ecommerce_transactions WHERE $__timeFilter(timestamp) AND status = 'completed' GROUP BY region ORDER BY revenue DESC",
+          "rawSql": "SELECT region, SUM(final_amount) as revenue FROM ecommerce_transactions WHERE $__timeFilter(\"timestamp\") AND status = 'completed' GROUP BY region ORDER BY revenue DESC",
           "refId": "A"
         }
       ],
@@ -567,9 +588,9 @@
           },
           "custom": {
             "hideFrom": {
+              "legend": false,
               "tooltip": false,
-              "viz": false,
-              "legend": false
+              "viz": false
             }
           },
           "mappings": []
@@ -588,13 +609,17 @@
           "displayMode": "table",
           "placement": "right",
           "showLegend": true,
-          "values": [
-            "value",
-            "percent"
-          ]
+          "values": ["value", "percent"]
         },
         "pieType": "pie",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "sort": "desc",
         "tooltip": {
+          "hideZeros": false,
           "mode": "single",
           "sort": "none"
         }
@@ -607,7 +632,7 @@
             "uid": "pinot_default"
           },
           "format": "table",
-          "rawSql": "SELECT status, COUNT(*) as count FROM ecommerce_transactions WHERE $__timeFilter(timestamp) GROUP BY status ORDER BY count DESC",
+          "rawSql": "SELECT status, COUNT(*) as count FROM ecommerce_transactions WHERE $__timeFilter(\"timestamp\") GROUP BY status ORDER BY count DESC",
           "refId": "A"
         }
       ],
@@ -629,6 +654,9 @@
             "cellOptions": {
               "type": "auto"
             },
+            "footer": {
+              "reducers": []
+            },
             "inspect": false
           },
           "mappings": [],
@@ -637,7 +665,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               }
             ]
           }
@@ -669,9 +697,7 @@
         "footer": {
           "countRows": false,
           "fields": "",
-          "reducer": [
-            "sum"
-          ],
+          "reducer": ["sum"],
           "show": false
         },
         "showHeader": true,
@@ -690,7 +716,7 @@
             "uid": "pinot_default"
           },
           "format": "table",
-          "rawSql": "SELECT product_name, COUNT(*) as orders, SUM(quantity) as units_sold, SUM(final_amount) as revenue FROM ecommerce_transactions WHERE $__timeFilter(timestamp) AND status = 'completed' GROUP BY product_name ORDER BY revenue DESC LIMIT 15",
+          "rawSql": "SELECT product_name, COUNT(*) as orders, SUM(quantity) as units_sold, SUM(final_amount) as revenue FROM ecommerce_transactions WHERE $__timeFilter(\"timestamp\") AND status = 'completed' GROUP BY product_name ORDER BY revenue DESC LIMIT 15",
           "refId": "A"
         }
       ],
@@ -708,30 +734,21 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "bars",
             "fillOpacity": 80,
             "gradientMode": "none",
             "hideFrom": {
+              "legend": false,
               "tooltip": false,
-              "viz": false,
-              "legend": false
+              "viz": false
             },
-            "lineInterpolation": "linear",
             "lineWidth": 1,
-            "pointSize": 5,
             "scaleDistribution": {
               "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
             },
             "thresholdsStyle": {
               "mode": "off"
@@ -743,7 +760,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               }
             ]
           },
@@ -759,16 +776,26 @@
       },
       "id": 11,
       "options": {
+        "barRadius": 0,
+        "barWidth": 0.97,
+        "fullHighlight": false,
+        "groupWidth": 0.7,
         "legend": {
           "calcs": [],
           "displayMode": "list",
           "placement": "bottom",
           "showLegend": true
         },
+        "orientation": "auto",
+        "showValue": "auto",
+        "stacking": "none",
         "tooltip": {
+          "hideZeros": false,
           "mode": "single",
           "sort": "none"
-        }
+        },
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0
       },
       "pluginVersion": "12.2.1",
       "targets": [
@@ -778,7 +805,7 @@
             "uid": "pinot_default"
           },
           "format": "table",
-          "rawSql": "SELECT payment_method, SUM(final_amount) as revenue FROM ecommerce_transactions WHERE $__timeFilter(timestamp) AND status = 'completed' GROUP BY payment_method ORDER BY revenue DESC",
+          "rawSql": "SELECT payment_method, SUM(final_amount) as revenue FROM ecommerce_transactions WHERE $__timeFilter(\"timestamp\") AND status = 'completed' GROUP BY payment_method ORDER BY revenue DESC",
           "refId": "A"
         }
       ],
@@ -786,13 +813,10 @@
       "type": "barchart"
     }
   ],
+  "preload": false,
   "refresh": "",
-  "schemaVersion": 38,
-  "style": "dark",
-  "tags": [
-    "pinot",
-    "ecommerce"
-  ],
+  "schemaVersion": 42,
+  "tags": ["pinot", "ecommerce"],
   "templating": {
     "list": []
   },
@@ -804,6 +828,5 @@
   "timezone": "",
   "title": "E-Commerce Analytics (Pinot)",
   "uid": "ecommerce-pinot-analytics",
-  "version": 0,
-  "weekStart": ""
+  "version": 2
 }
