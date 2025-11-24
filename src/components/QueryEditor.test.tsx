@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { QueryEditor } from './QueryEditor';
-import { QueryFormat, EditorMode } from '../types';
+import { QueryFormat } from '../types';
 
 // Mock @grafana/ui components
 jest.mock('@grafana/ui', () => ({
@@ -47,22 +47,14 @@ jest.mock('@grafana/ui', () => ({
 
 // Mock @grafana/plugin-ui
 jest.mock('@grafana/plugin-ui', () => ({
-  SQLEditor: ({ query, onChange, onRunQuery }: any) => (
+  SQLEditor: ({ query, onChange, onBlur }: any) => (
     <div data-testid="sql-editor">
       <textarea
         data-testid="sql-textarea"
-        value={query.rawSql || ''}
-        onChange={(e) => onChange({ ...query, rawSql: e.target.value })}
+        value={query || ''}
+        onChange={(e) => onChange(e.target.value)}
+        onBlur={onBlur}
       />
-      <button onClick={onRunQuery} data-testid="run-query">Run Query</button>
-      <select
-        data-testid="editor-mode-select"
-        value={query.editorMode || 'code'}
-        onChange={(e) => onChange({ ...query, editorMode: e.target.value })}
-      >
-        <option value="code">Code</option>
-        <option value="builder">Builder</option>
-      </select>
     </div>
   ),
 }));
@@ -101,7 +93,7 @@ describe('QueryEditor', () => {
       expect(screen.getByTestId('format-select')).toBeInTheDocument();
     });
 
-    it('should render format selector with correct options', () => {
+    it('should render format select with correct options', () => {
       const query = {
         refId: 'A',
         rawSql: '',
@@ -283,7 +275,6 @@ describe('QueryEditor', () => {
         refId: 'A',
         rawSql: 'SELECT id, name FROM users',
         format: QueryFormat.Table,
-        editorMode: EditorMode.Code,
       };
 
       render(
@@ -325,7 +316,7 @@ describe('QueryEditor', () => {
       );
     });
 
-    it('should call onRunQuery when run button is clicked', () => {
+    it('should call onBlur when SQL editor loses focus', () => {
       const query = {
         refId: 'A',
         rawSql: 'SELECT * FROM table',
@@ -341,20 +332,36 @@ describe('QueryEditor', () => {
         />
       );
 
-      const runButton = screen.getByTestId('run-query');
-      fireEvent.click(runButton);
+      const sqlTextarea = screen.getByTestId('sql-textarea');
+      fireEvent.blur(sqlTextarea);
 
       expect(mockOnRunQuery).toHaveBeenCalled();
     });
   });
 
-  describe('Editor Mode', () => {
-    it('should handle editor mode changes', () => {
+  describe('Default Values', () => {
+    it('should use empty string for rawSql when not provided', () => {
+      const query = {
+        refId: 'A',
+      };
+
+      render(
+        <QueryEditor
+          query={query}
+          onChange={mockOnChange}
+          onRunQuery={mockOnRunQuery}
+          datasource={mockDatasource}
+        />
+      );
+
+      const sqlTextarea = screen.getByTestId('sql-textarea');
+      expect(sqlTextarea).toHaveValue('');
+    });
+
+    it('should use Table format when not provided', () => {
       const query = {
         refId: 'A',
         rawSql: 'SELECT * FROM table',
-        format: QueryFormat.Table,
-        editorMode: EditorMode.Code,
       };
 
       render(
@@ -366,90 +373,15 @@ describe('QueryEditor', () => {
         />
       );
 
-      const editorModeSelect = screen.getByTestId('editor-mode-select');
-      fireEvent.change(editorModeSelect, { target: { value: 'builder' } });
-
-      expect(mockOnChange).toHaveBeenCalledWith(
-        expect.objectContaining({
-          editorMode: 'builder',
-        })
-      );
-    });
-  });
-
-  describe('Query Builder', () => {
-    it('should handle table selection in builder mode', () => {
-      const query = {
-        refId: 'A',
-        rawSql: '',
-        format: QueryFormat.Table,
-        editorMode: EditorMode.Builder,
-        table: '',
-      };
-
-      render(
-        <QueryEditor
-          query={query}
-          onChange={mockOnChange}
-          onRunQuery={mockOnRunQuery}
-          datasource={mockDatasource}
-        />
-      );
-
-      // The SQLEditor mock receives onChange callback
-      // Simulate table selection by calling onChange with table
-      const sqlEditor = screen.getByTestId('sql-editor');
-      expect(sqlEditor).toBeInTheDocument();
-    });
-  });
-
-  describe('Default Values', () => {
-    it('should use default values when query properties are missing', () => {
-      const query = {
-        refId: 'A',
-      };
-
-      render(
-        <QueryEditor
-          query={query}
-          onChange={mockOnChange}
-          onRunQuery={mockOnRunQuery}
-          datasource={mockDatasource}
-        />
-      );
-
-      // Should not throw error and should render with defaults
-      expect(screen.getByTestId('sql-editor')).toBeInTheDocument();
-      expect(screen.getByTestId('format-select')).toHaveValue(QueryFormat.Table);
-    });
-  });
-
-  describe('Datasource Integration', () => {
-    it('should provide getDB function to SQLEditor', () => {
-      const query = {
-        refId: 'A',
-        rawSql: '',
-        format: QueryFormat.Table,
-      };
-
-      render(
-        <QueryEditor
-          query={query}
-          onChange={mockOnChange}
-          onRunQuery={mockOnRunQuery}
-          datasource={mockDatasource}
-        />
-      );
-
-      // SQLEditor is rendered with datasource prop
-      expect(screen.getByTestId('sql-editor')).toBeInTheDocument();
+      const formatSelect = screen.getByTestId('format-select');
+      expect(formatSelect).toHaveValue(QueryFormat.Table);
     });
 
-    it('should provide getTable function to SQLEditor', () => {
+    it('should use empty string for timeColumn when not provided', () => {
       const query = {
         refId: 'A',
-        rawSql: '',
-        format: QueryFormat.Table,
+        rawSql: 'SELECT * FROM table',
+        format: QueryFormat.Timeseries,
       };
 
       render(
@@ -461,8 +393,8 @@ describe('QueryEditor', () => {
         />
       );
 
-      // SQLEditor is rendered with datasource prop
-      expect(screen.getByTestId('sql-editor')).toBeInTheDocument();
+      const timeColumnInput = screen.getByTestId('time-column-input');
+      expect(timeColumnInput).toHaveValue('');
     });
   });
 });

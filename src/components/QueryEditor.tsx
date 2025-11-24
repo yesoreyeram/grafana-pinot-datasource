@@ -2,7 +2,7 @@ import React from 'react';
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { InlineField, InlineFieldRow, Select, Input } from '@grafana/ui';
 import { SQLEditor } from '@grafana/plugin-ui';
-import { PinotQuery, EditorMode, QueryFormat } from '../types';
+import { PinotQuery, QueryFormat } from '../types';
 
 type Props = QueryEditorProps<any, PinotQuery, any>;
 
@@ -11,23 +11,15 @@ const FORMAT_OPTIONS: Array<SelectableValue<QueryFormat>> = [
   { label: 'Table', value: QueryFormat.Table },
 ];
 
-export const QueryEditor: React.FC<Props> = ({ query, onChange, onRunQuery, datasource }) => {
+export const QueryEditor: React.FC<Props> = ({ query, onChange, onRunQuery }) => {
   const {
     rawSql = '',
-    editorMode = EditorMode.Code,
     format = QueryFormat.Table,
-    table = '',
-    dataset = '',
-    sql = {},
     timeColumn = '',
   } = query;
 
-  const onSqlChange = (rawSql: string) => {
-    onChange({ ...query, rawSql });
-  };
-
-  const onEditorModeChange = (editorMode: EditorMode) => {
-    onChange({ ...query, editorMode });
+  const onSqlChange = (sql: string) => {
+    onChange({ ...query, rawSql: sql });
   };
 
   const onFormatChange = (selectable: SelectableValue<QueryFormat>) => {
@@ -37,18 +29,6 @@ export const QueryEditor: React.FC<Props> = ({ query, onChange, onRunQuery, data
 
   const onTimeColumnChange = (e: React.FormEvent<HTMLInputElement>) => {
     onChange({ ...query, timeColumn: e.currentTarget.value });
-  };
-
-  const onTableChange = (table: string) => {
-    onChange({ ...query, table });
-  };
-
-  const onDatasetChange = (dataset: string) => {
-    onChange({ ...query, dataset });
-  };
-
-  const onSqlBuilderChange = (sql: any) => {
-    onChange({ ...query, sql });
   };
 
   return (
@@ -78,53 +58,9 @@ export const QueryEditor: React.FC<Props> = ({ query, onChange, onRunQuery, data
       </InlineFieldRow>
 
       <SQLEditor
-        query={{
-          rawSql,
-          editorMode,
-          table,
-          dataset,
-          sql,
-        }}
-        onChange={(q) => {
-          const newQuery = { ...query };
-          if (q.rawSql !== undefined) newQuery.rawSql = q.rawSql;
-          if (q.editorMode !== undefined) newQuery.editorMode = q.editorMode as EditorMode;
-          if (q.table !== undefined) newQuery.table = q.table;
-          if (q.dataset !== undefined) newQuery.dataset = q.dataset;
-          if (q.sql !== undefined) newQuery.sql = q.sql;
-          onChange(newQuery);
-        }}
-        onRunQuery={onRunQuery}
-        datasource={{
-          getDB: async () => {
-            // Get list of tables from datasource
-            try {
-              const resource = await datasource.getResource('tables');
-              return {
-                tables: resource.tables || [],
-              };
-            } catch (error) {
-              // Log error for debugging - controller may not be configured
-              console.warn('Unable to fetch table list from Pinot controller:', error);
-              // Return empty list to allow raw SQL mode to work
-              return { tables: [] };
-            }
-          },
-          getTable: async (tableName: string) => {
-            // Get table schema
-            try {
-              const resource = await datasource.getResource(`table/${tableName}/schema`);
-              return {
-                columns: resource.columns || [],
-              };
-            } catch (error) {
-              // Log error for debugging - schema API may not be implemented yet
-              console.warn(`Unable to fetch schema for table ${tableName}:`, error);
-              // Return empty columns to allow raw SQL mode to work
-              return { columns: [] };
-            }
-          },
-        }}
+        query={rawSql}
+        onChange={onSqlChange}
+        onBlur={onRunQuery}
       />
     </>
   );
