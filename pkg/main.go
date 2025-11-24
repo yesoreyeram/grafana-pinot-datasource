@@ -319,9 +319,14 @@ func (c *PinotClient) Health(ctx context.Context) error {
 
 // Query executes a SQL query against the Pinot broker
 func (c *PinotClient) Query(ctx context.Context, sql string) (*http.Response, error) {
-	queryPayload := fmt.Sprintf(`{"sql": "%s"}`, sql)
+	// Create query payload with proper JSON encoding to handle special characters
+	payload := map[string]string{"sql": sql}
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal query payload: %w", err)
+	}
 
-	resp, err := c.brokerClient.doRequest(ctx, "POST", "/query/sql", strings.NewReader(queryPayload))
+	resp, err := c.brokerClient.doRequest(ctx, "POST", "/query/sql", strings.NewReader(string(payloadBytes)))
 	if err != nil {
 		return nil, err
 	}
