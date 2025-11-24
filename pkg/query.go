@@ -368,6 +368,14 @@ func convertToTime(value interface{}, isTimeColumn bool) (time.Time, error) {
 		// Convert to milliseconds and then to time
 		return time.UnixMilli(int64(v)), nil
 	case string:
+		// Try parsing as Pinot timestamp format first: "2006-01-04 14:35:13.0"
+		if t, err := time.Parse("2006-01-02 15:04:05.999999999", v); err == nil {
+			return t, nil
+		}
+		// Try without fractional seconds: "2006-01-04 14:35:13"
+		if t, err := time.Parse("2006-01-02 15:04:05", v); err == nil {
+			return t, nil
+		}
 		// Try parsing as RFC3339
 		if t, err := time.Parse(time.RFC3339, v); err == nil {
 			return t, nil
