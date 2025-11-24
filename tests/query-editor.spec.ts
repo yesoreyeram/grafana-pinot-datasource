@@ -7,31 +7,28 @@ import { test, expect } from '@grafana/plugin-e2e';
  */
 
 test.describe.serial('Apache Pinot Query Editor - Basic Functionality', () => {
-  let datasourceUid: string;
+  let datasourceUid: string = '';
 
   test('should display query editor with default options', async ({ createDataSourceConfigPage, explorePage, page }) => {
     // Create and configure datasource in first test
-    if (!datasourceUid) {
-      const configPage = await createDataSourceConfigPage({
-        type: 'yesoreyeram-pinot-datasource',
-        deleteDataSourceAfterTest: false,
-      });
+    const configPage = await createDataSourceConfigPage({
+      type: 'yesoreyeram-pinot-datasource',
+      deleteDataSourceAfterTest: false,
+    });
 
-      await expect(page.getByPlaceholder('http://localhost:8099')).toBeVisible({ timeout: 15000 });
-      await page.getByPlaceholder('http://localhost:8099').fill('http://pinot-broker:8099');
+    await expect(page.getByPlaceholder('http://localhost:8099')).toBeVisible({ timeout: 15000 });
+    await page.getByPlaceholder('http://localhost:8099').fill('http://pinot-broker:8099');
 
-      await page.getByText('Controller Configuration (Optional)').click();
-      await expect(page.getByPlaceholder('http://localhost:9000')).toBeVisible({ timeout: 15000 });
-      await page.getByPlaceholder('http://localhost:9000').fill('http://pinot-controller:9000');
+    await page.getByText('Controller Configuration (Optional)').click();
+    await expect(page.getByPlaceholder('http://localhost:9000')).toBeVisible({ timeout: 15000 });
+    await page.getByPlaceholder('http://localhost:9000').fill('http://pinot-controller:9000');
 
-      const healthCheckResponse = await configPage.saveAndTest();
-      expect(healthCheckResponse.status()).toBe(200);
+    const healthCheckResponse = await configPage.saveAndTest();
+    expect(healthCheckResponse.status()).toBe(200);
 
-      datasourceUid = configPage.datasource.uid;
-    }
-    
+    datasourceUid = configPage.datasource.uid;
+
     // Continue with test
-
     await explorePage.datasource.set(datasourceUid);
     await page.waitForTimeout(1000);
 
@@ -149,31 +146,28 @@ test.describe.serial('Apache Pinot Query Editor - Basic Functionality', () => {
 });
 
 test.describe.serial('Apache Pinot Query Editor - Real Data Queries', () => {
-  let datasourceUid: string;
+  let datasourceUid: string = '';
 
   test('should query airlineStats sample data', async ({ createDataSourceConfigPage, explorePage, page }) => {
     // Create datasource in first test
-    if (!datasourceUid) {
-      const configPage = await createDataSourceConfigPage({
-        type: 'yesoreyeram-pinot-datasource',
-        deleteDataSourceAfterTest: false,
-      });
+    const configPage = await createDataSourceConfigPage({
+      type: 'yesoreyeram-pinot-datasource',
+      deleteDataSourceAfterTest: false,
+    });
 
-      await expect(page.getByPlaceholder('http://localhost:8099')).toBeVisible({ timeout: 15000 });
-      await page.getByPlaceholder('http://localhost:8099').fill('http://pinot-broker:8099');
-      
-      await page.getByText('Controller Configuration (Optional)').click();
-      await expect(page.getByPlaceholder('http://localhost:9000')).toBeVisible({ timeout: 15000 });
-      await page.getByPlaceholder('http://localhost:9000').fill('http://pinot-controller:9000');
+    await expect(page.getByPlaceholder('http://localhost:8099')).toBeVisible({ timeout: 15000 });
+    await page.getByPlaceholder('http://localhost:8099').fill('http://pinot-broker:8099');
+    
+    await page.getByText('Controller Configuration (Optional)').click();
+    await expect(page.getByPlaceholder('http://localhost:9000')).toBeVisible({ timeout: 15000 });
+    await page.getByPlaceholder('http://localhost:9000').fill('http://pinot-controller:9000');
 
-      const healthCheckResponse = await configPage.saveAndTest();
-      expect(healthCheckResponse.status()).toBe(200);
+    const healthCheckResponse = await configPage.saveAndTest();
+    expect(healthCheckResponse.status()).toBe(200);
 
-      datasourceUid = configPage.datasource.uid;
-    }
+    datasourceUid = configPage.datasource.uid;
 
     // Continue with test
-
     await explorePage.datasource.set(datasourceUid);
     await page.waitForTimeout(1000);
 
@@ -251,31 +245,28 @@ test.describe.serial('Apache Pinot Query Editor - Real Data Queries', () => {
 });
 
 test.describe.serial('Apache Pinot Query Editor - Time Series with Macros', () => {
-  let datasourceUid: string;
+  let datasourceUid: string = '';
 
   test('should execute time series query with $__timeFilter macro', async ({ createDataSourceConfigPage, explorePage, page }) => {
     // Create datasource in first test
-    if (!datasourceUid) {
-      const configPage = await createDataSourceConfigPage({
-        type: 'yesoreyeram-pinot-datasource',
-        deleteDataSourceAfterTest: false,
-      });
+    const configPage = await createDataSourceConfigPage({
+      type: 'yesoreyeram-pinot-datasource',
+      deleteDataSourceAfterTest: false,
+    });
 
-      await expect(page.getByPlaceholder('http://localhost:8099')).toBeVisible({ timeout: 15000 });
-      await page.getByPlaceholder('http://localhost:8099').fill('http://pinot-broker:8099');
-      
-      await page.getByText('Controller Configuration (Optional)').click();
-      await expect(page.getByPlaceholder('http://localhost:9000')).toBeVisible({ timeout: 15000 });
-      await page.getByPlaceholder('http://localhost:9000').fill('http://pinot-controller:9000');
+    await expect(page.getByPlaceholder('http://localhost:8099')).toBeVisible({ timeout: 15000 });
+    await page.getByPlaceholder('http://localhost:8099').fill('http://pinot-broker:8099');
+    
+    await page.getByText('Controller Configuration (Optional)').click();
+    await expect(page.getByPlaceholder('http://localhost:9000')).toBeVisible({ timeout: 15000 });
+    await page.getByPlaceholder('http://localhost:9000').fill('http://pinot-controller:9000');
 
-      const healthCheckResponse = await configPage.saveAndTest();
-      expect(healthCheckResponse.status()).toBe(200);
+    const healthCheckResponse = await configPage.saveAndTest();
+    expect(healthCheckResponse.status()).toBe(200);
 
-      datasourceUid = configPage.datasource.uid;
-    }
+    datasourceUid = configPage.datasource.uid;
 
     // Continue with test
-
     await explorePage.datasource.set(datasourceUid);
     await page.waitForTimeout(1000);
 
