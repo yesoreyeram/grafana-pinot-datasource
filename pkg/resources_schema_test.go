@@ -43,6 +43,7 @@ func TestTableSchema(t *testing.T) {
 		ControllerAuthType: AuthTypeNone,
 	})
 	require.NoError(t, err)
+	require.NotNil(t, client.controllerClient, "Controller client should be initialized")
 	httpmock.ActivateNonDefault(client.controllerClient.httpClient)
 
 	schema, err := client.TableSchema(context.Background(), "testTable")
@@ -102,6 +103,7 @@ func TestCallResource_TableSchema(t *testing.T) {
 		ControllerAuthType: AuthTypeNone,
 	})
 	require.NoError(t, err)
+	require.NotNil(t, client.controllerClient, "Controller client should be initialized")
 	httpmock.ActivateNonDefault(client.controllerClient.httpClient)
 
 	ds := &DataSource{client: client}
@@ -153,6 +155,7 @@ func TestCallResource_TableSchemaNotFound(t *testing.T) {
 		ControllerAuthType: AuthTypeNone,
 	})
 	require.NoError(t, err)
+	require.NotNil(t, client.controllerClient, "Controller client should be initialized")
 	httpmock.ActivateNonDefault(client.controllerClient.httpClient)
 
 	ds := &DataSource{client: client}
