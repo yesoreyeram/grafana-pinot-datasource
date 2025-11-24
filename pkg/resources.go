@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
@@ -62,15 +63,78 @@ func (ds *DataSource) handleTables(ctx context.Context, req *backend.CallResourc
 }
 
 // handleTableSchema returns schema for a specific table
-// Note: This feature requires controller API access to fetch table schemas.
-// Currently returns empty array but the SQLEditor component handles this gracefully.
 func (ds *DataSource) handleTableSchema(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	// TODO: Extract table name from path and fetch schema from Pinot controller
-	// Implementation requires controller API endpoint: GET /tables/{tableName}/schema
-	// For now, return empty columns which allows query builder to work with raw SQL mode
+	// Extract table name from path: table/{tableName}/schema
+	tableName := ""
+	if len(req.Path) > 6 && req.Path[:6] == "table/" {
+		parts := strings.Split(req.Path, "/")
+		if len(parts) >= 2 {
+			tableName = parts[1]
+		}
+	}
+
+	if tableName == "" {
+		return sender.Send(&backend.CallResourceResponse{
+			Status: http.StatusBadRequest,
+			Body:   []byte(`{"error": "table name is required"}`),
+		})
+	}
+
+	// Fetch schema from Pinot controller
+	schema, err := ds.client.TableSchema(ctx, tableName)
+	if err != nil {
+		backend.Logger.Warn("Failed to fetch table schema", "table", tableName, "error", err)
+		// Return empty columns to allow raw SQL mode to work
+		response := map[string]interface{}{
+			"columns": []map[string]string{},
+		}
+		body, _ := json.Marshal(response)
+		return sender.Send(&backend.CallResourceResponse{
+			Status: http.StatusOK,
+			Body:   body,
+			Headers: map[string][]string{
+				"Content-Type": {"application/json"},
+			},
+		})
+	}
+
+	// Convert schema to columns format for SQLEditor
+	columns := []map[string]string{}
 	
+	// Add dimension fields
+	for _, field := range schema.DimensionFieldSpecs {
+		columns = append(columns, map[string]string{
+			"name": field.Name,
+			"type": field.DataType,
+		})
+	}
+	
+	// Add metric fields
+	for _, field := range schema.MetricFieldSpecs {
+		columns = append(columns, map[string]string{
+			"name": field.Name,
+			"type": field.DataType,
+		})
+	}
+	
+	// Add date-time fields
+	for _, field := range schema.DateTimeFieldSpecs {
+		columns = append(columns, map[string]string{
+			"name": field.Name,
+			"type": field.DataType,
+		})
+	}
+	
+	// Add time field if present (deprecated but still supported)
+	if schema.TimeFieldSpec != nil && schema.TimeFieldSpec.IncomingGranularitySpec != nil {
+		columns = append(columns, map[string]string{
+			"name": schema.TimeFieldSpec.IncomingGranularitySpec.Name,
+			"type": schema.TimeFieldSpec.IncomingGranularitySpec.DataType,
+		})
+	}
+
 	response := map[string]interface{}{
-		"columns": []map[string]string{},
+		"columns": columns,
 	}
 
 	body, err := json.Marshal(response)

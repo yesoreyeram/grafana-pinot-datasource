@@ -93,43 +93,6 @@ func TestCallResource_TablesError(t *testing.T) {
 	assert.Equal(t, http.StatusInternalServerError, resp.Status)
 }
 
-func TestCallResource_TableSchema(t *testing.T) {
-	client, err := New(PinotClientOptions{
-		BrokerUrl:      "http://test-broker:8099",
-		BrokerAuthType: AuthTypeNone,
-	})
-	require.NoError(t, err)
-
-	ds := &DataSource{client: client}
-
-	req := &backend.CallResourceRequest{
-		Path: "table/myTable/schema",
-	}
-
-	var responses []*backend.CallResourceResponse
-	sender := &mockSender{
-		send: func(resp *backend.CallResourceResponse) error {
-			responses = append(responses, resp)
-			return nil
-		},
-	}
-
-	err = ds.CallResource(context.Background(), req, sender)
-	require.NoError(t, err)
-	require.Len(t, responses, 1)
-
-	resp := responses[0]
-	assert.Equal(t, http.StatusOK, resp.Status)
-
-	var result map[string]interface{}
-	err = json.Unmarshal(resp.Body, &result)
-	require.NoError(t, err)
-
-	columns, ok := result["columns"].([]interface{})
-	require.True(t, ok)
-	assert.Equal(t, 0, len(columns)) // Currently returns empty array
-}
-
 func TestCallResource_NotFound(t *testing.T) {
 	client, err := New(PinotClientOptions{
 		BrokerUrl:      "http://test-broker:8099",

@@ -126,6 +126,45 @@ type TablesResponse struct {
 	Tables []string `json:"tables"`
 }
 
+// TableSchemaResponse represents the response from the table schema API
+type TableSchemaResponse struct {
+	SchemaName          string                   `json:"schemaName"`
+	DimensionFieldSpecs []FieldSpec              `json:"dimensionFieldSpecs"`
+	MetricFieldSpecs    []FieldSpec              `json:"metricFieldSpecs"`
+	DateTimeFieldSpecs  []DateTimeFieldSpec      `json:"dateTimeFieldSpecs"`
+	TimeFieldSpec       *TimeFieldSpec           `json:"timeFieldSpec"`
+}
+
+// FieldSpec represents a field specification in Pinot schema
+type FieldSpec struct {
+	Name         string `json:"name"`
+	DataType     string `json:"dataType"`
+	DefaultValue string `json:"defaultNullValue,omitempty"`
+	MaxLength    int    `json:"maxLength,omitempty"`
+}
+
+// DateTimeFieldSpec represents a date-time field specification
+type DateTimeFieldSpec struct {
+	Name         string `json:"name"`
+	DataType     string `json:"dataType"`
+	Format       string `json:"format"`
+	Granularity  string `json:"granularity"`
+	DefaultValue string `json:"defaultNullValue,omitempty"`
+}
+
+// TimeFieldSpec represents a time field specification (deprecated but still supported)
+type TimeFieldSpec struct {
+	IncomingGranularitySpec *GranularitySpec `json:"incomingGranularitySpec"`
+	OutgoingGranularitySpec *GranularitySpec `json:"outgoingGranularitySpec,omitempty"`
+}
+
+// GranularitySpec represents time granularity specification
+type GranularitySpec struct {
+	Name     string `json:"name"`
+	DataType string `json:"dataType"`
+	TimeType string `json:"timeType"`
+}
+
 // ============================================================================
 // TYPES - Grafana DataSource
 // ============================================================================
@@ -339,6 +378,38 @@ func (c *PinotClient) Schemas(ctx context.Context) ([]string, error) {
 
 	// Placeholder for future implementation
 	return []string{}, nil
+}
+
+// TableSchema retrieves the schema for a specific table from the Pinot controller
+func (c *PinotClient) TableSchema(ctx context.Context, tableName string) (*TableSchemaResponse, error) {
+	if c.controllerClient == nil {
+		return nil, fmt.Errorf("controller client not configured")
+	}
+
+	// Fetch schema from controller API: GET /tables/{tableName}/schema
+	path := fmt.Sprintf("/tables/%s/schema", tableName)
+	resp, err := c.controllerClient.doRequest(ctx, "GET", path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch table schema: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("get table schema failed with status %d: %s", resp.StatusCode, string(body))
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response: %w", err)
+	}
+
+	var schemaResp TableSchemaResponse
+	if err := json.Unmarshal(body, &schemaResp); err != nil {
+		return nil, fmt.Errorf("failed to parse schema response: %w", err)
+	}
+
+	return &schemaResp, nil
 }
 
 // ============================================================================
