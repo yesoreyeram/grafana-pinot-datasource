@@ -341,7 +341,7 @@
             "uid": "pinot_default"
           },
           "format": "timeseries",
-          "rawSql": "SELECT timestamp, SUM(final_amount) as revenue FROM ecommerce_transactions WHERE $__timeFilter(timestamp) AND status = 'completed' GROUP BY timestamp ORDER BY timestamp",
+          "rawSql": "SELECT \"timestamp\", SUM(final_amount) as revenue FROM ecommerce_transactions WHERE $__timeFilter(timestamp) AND status = 'completed' GROUP BY \"timestamp\" ORDER BY \"timestamp\"",
           "refId": "A",
           "timeColumn": "timestamp"
         }
@@ -429,7 +429,7 @@
             "uid": "pinot_default"
           },
           "format": "timeseries",
-          "rawSql": "SELECT timestamp, COUNT(*) as orders FROM ecommerce_transactions WHERE $__timeFilter(timestamp) GROUP BY timestamp ORDER BY timestamp",
+          "rawSql": "SELECT \"timestamp\", COUNT(*) as orders FROM ecommerce_transactions WHERE $__timeFilter(timestamp) GROUP BY \"timestamp\" ORDER BY \"timestamp\"",
           "refId": "A",
           "timeColumn": "timestamp"
         }
@@ -789,7 +789,10 @@
   "refresh": "",
   "schemaVersion": 38,
   "style": "dark",
-  "tags": ["pinot", "ecommerce"],
+  "tags": [
+    "pinot",
+    "ecommerce"
+  ],
   "templating": {
     "list": []
   },
