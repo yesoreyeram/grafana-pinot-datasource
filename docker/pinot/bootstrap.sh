@@ -140,6 +140,7 @@ add_schema /pinot-samples/ecommerce_products/schema.json
 add_schema /pinot-samples/ecommerce_orders/schema.json
 add_schema /pinot-samples/ecommerce_order_items/schema.json
 add_schema /pinot-samples/metrics_timeseries/schema.json
+add_schema /pinot-samples/ecommerce_transactions/schema.json
 
 # Add tables
 add_table /pinot-samples/airline_stats/table.json
@@ -149,6 +150,7 @@ add_table /pinot-samples/ecommerce_products/table.json
 add_table /pinot-samples/ecommerce_orders/table.json
 add_table /pinot-samples/ecommerce_order_items/table.json
 add_table /pinot-samples/metrics_timeseries/table.json
+add_table /pinot-samples/ecommerce_transactions/table.json
 
 # Load sample data
 run_ingestion_job airlineStats /pinot-samples/airline_stats/data /pinot-samples/airline_stats/schema.json /pinot-samples/airline_stats/table.json /tmp/pinot-airlineStats
@@ -162,5 +164,8 @@ run_ingestion_job ecommerce_order_items /pinot-samples/ecommerce_order_items/dat
 
 # Load time series metrics data
 run_ingestion_job metricsTimeseries /pinot-samples/metrics_timeseries/data /pinot-samples/metrics_timeseries/schema.json /pinot-samples/metrics_timeseries/table.json /tmp/pinot-metrics_timeseries
+
+# Load ecommerce transactions (20 years of data)
+run_ingestion_job ecommerce_transactions /pinot-samples/ecommerce_transactions/data /pinot-samples/ecommerce_transactions/schema.json /pinot-samples/ecommerce_transactions/table.json /tmp/pinot-ecommerce_transactions
 
 echo "Sample Pinot tables are ready"
