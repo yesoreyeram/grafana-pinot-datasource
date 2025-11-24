@@ -82,6 +82,9 @@ func (ds *DataSource) executeQuery(ctx context.Context, query backend.DataQuery)
 		}
 	}
 
+	// Apply Grafana time range macros
+	sql = applyMacros(sql, query.TimeRange)
+
 	// Execute query against Pinot
 	resp, err := ds.client.Query(ctx, sql)
 	if err != nil {
@@ -399,4 +402,55 @@ func convertToString(value interface{}) string {
 		}
 		return fmt.Sprintf("%v", v)
 	}
+}
+
+// ============================================================================
+// MACRO SUBSTITUTION
+// ============================================================================
+
+// applyMacros replaces Grafana time range macros in SQL query
+// Supports: $__timeFrom, $__timeTo, $__timeFilter(column)
+func applyMacros(sql string, timeRange backend.TimeRange) string {
+	// Convert time range to milliseconds (Pinot's default timestamp format)
+	fromMs := timeRange.From.UnixMilli()
+	toMs := timeRange.To.UnixMilli()
+
+	// Replace $__timeFrom() and $__timeFromMs
+	sql = strings.ReplaceAll(sql, "$__timeFrom()", fmt.Sprintf("%d", fromMs))
+	sql = strings.ReplaceAll(sql, "$__timeFromMs", fmt.Sprintf("%d", fromMs))
+	sql = strings.ReplaceAll(sql, "$__timeFrom", fmt.Sprintf("%d", fromMs))
+
+	// Replace $__timeTo() and $__timeToMs
+	sql = strings.ReplaceAll(sql, "$__timeTo()", fmt.Sprintf("%d", toMs))
+	sql = strings.ReplaceAll(sql, "$__timeToMs", fmt.Sprintf("%d", toMs))
+	sql = strings.ReplaceAll(sql, "$__timeTo", fmt.Sprintf("%d", toMs))
+
+	// Replace $__timeFilter(column) with column BETWEEN fromMs AND toMs
+	// Pattern: $__timeFilter(columnName)
+	filterPattern := "$__timeFilter("
+	for {
+		startIdx := strings.Index(sql, filterPattern)
+		if startIdx == -1 {
+			break
+		}
+		
+		// Find the closing parenthesis
+		endIdx := strings.Index(sql[startIdx:], ")")
+		if endIdx == -1 {
+			break
+		}
+		endIdx += startIdx
+		
+		// Extract column name
+		columnName := sql[startIdx+len(filterPattern) : endIdx]
+		columnName = strings.TrimSpace(columnName)
+		
+		// Create the replacement filter
+		replacement := fmt.Sprintf("%s >= %d AND %s < %d", columnName, fromMs, columnName, toMs)
+		
+		// Replace in SQL
+		sql = sql[:startIdx] + replacement + sql[endIdx+1:]
+	}
+
+	return sql
 }
