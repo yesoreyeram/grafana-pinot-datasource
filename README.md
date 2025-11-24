@@ -53,6 +53,12 @@ The `docker/pinot` folder contains the full definition of the demo tables so you
 - `airlineStats`: Simple flight punctuality metrics keyed by carrier and route
 - `baseballStats`: 2022 season hitting stats for a handful of MLB players  
 - `ecommerce_*`: E-commerce data with customers, products, orders, and order items
+- `metricsTimeseries`: Time series metrics data with 60,000+ data points spanning 7 days
+  - **Metrics**: cpu_usage, memory_usage, disk_io, network_throughput, request_latency
+  - **Hosts**: web-1, web-2, web-3, api-1, api-2, db-1, db-2
+  - **Regions**: us-east-1, us-west-2, eu-west-1
+  - **Intervals**: 5-minute data points with daily patterns
+  - **Features**: Includes null values (10% random) for testing null handling
 
 Each dataset ships with:
 
@@ -86,6 +92,34 @@ The plugin provides a full-featured SQL query editor with two modes:
   - Requires specifying a time column containing timestamp data
   - Timestamps should be in milliseconds (Pinot standard)
 
+### Grafana Time Filter Macros
+
+The plugin supports Grafana's time range macros for dynamic time-based queries:
+
+| Macro | Description | Example Output |
+|-------|-------------|----------------|
+| `$__timeFrom` | Start of selected time range (milliseconds) | `1638360000000` |
+| `$__timeTo` | End of selected time range (milliseconds) | `1638446400000` |
+| `$__timeFilter(column)` | Complete time range filter | `column >= 1638360000000 AND column < 1638446400000` |
+| `$__timeFromMs` | Explicit millisecond variant | `1638360000000` |
+| `$__timeToMs` | Explicit millisecond variant | `1638446400000` |
+
+**Usage Example**:
+```sql
+-- Using $__timeFilter (recommended)
+SELECT timestamp, AVG(value) 
+FROM metricsTimeseries 
+WHERE $__timeFilter(timestamp)
+GROUP BY timestamp
+
+-- Using individual macros
+SELECT timestamp, value
+FROM metricsTimeseries  
+WHERE timestamp >= $__timeFrom AND timestamp < $__timeTo
+```
+
+The macros are automatically replaced with the current dashboard/panel time range in milliseconds, making queries dynamic and reusable across different time periods.
+
 ### Query Examples
 
 **Simple SELECT query**:
@@ -96,13 +130,22 @@ GROUP BY Origin, Dest
 LIMIT 10
 ```
 
-**Time series query**:
+**Time series query with Grafana macros**:
 ```sql
-SELECT created_at, SUM(total) as revenue
-FROM ecommerce_orders
-WHERE created_at > 1638360000000
-GROUP BY created_at
-ORDER BY created_at
+SELECT timestamp, AVG(value) as avg_value
+FROM metricsTimeseries
+WHERE $__timeFilter(timestamp)
+GROUP BY timestamp
+ORDER BY timestamp
+```
+
+**Time series query with individual macros**:
+```sql
+SELECT timestamp, metric_name, value
+FROM metricsTimeseries
+WHERE timestamp >= $__timeFrom AND timestamp < $__timeTo
+  AND metric_name = 'cpu_usage'
+ORDER BY timestamp
 ```
 
 **JOIN query**:
