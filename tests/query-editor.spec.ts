@@ -28,6 +28,10 @@ test.describe.serial('Apache Pinot Query Editor - Basic Functionality', () => {
 
     datasourceUid = configPage.datasource.uid;
 
+    // Navigate to Explore page before setting datasource
+    await explorePage.goto();
+    await page.waitForTimeout(1000);
+
     // Continue with test
     await explorePage.datasource.set(datasourceUid);
     await page.waitForTimeout(1000);
@@ -167,6 +171,10 @@ test.describe.serial('Apache Pinot Query Editor - Real Data Queries', () => {
 
     datasourceUid = configPage.datasource.uid;
 
+    // Navigate to Explore page before setting datasource
+    await explorePage.goto();
+    await page.waitForTimeout(1000);
+
     // Continue with test
     await explorePage.datasource.set(datasourceUid);
     await page.waitForTimeout(1000);
@@ -265,6 +273,10 @@ test.describe.serial('Apache Pinot Query Editor - Time Series with Macros', () =
     expect(healthCheckResponse.status()).toBe(200);
 
     datasourceUid = configPage.datasource.uid;
+
+    // Navigate to Explore page before setting datasource
+    await explorePage.goto();
+    await page.waitForTimeout(1000);
 
     // Continue with test
     await explorePage.datasource.set(datasourceUid);
