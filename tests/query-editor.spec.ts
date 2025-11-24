@@ -6,34 +6,32 @@ import { test, expect } from '@grafana/plugin-e2e';
  * Includes screenshots for documentation
  */
 
-test.describe('Apache Pinot Query Editor - Basic Functionality', () => {
+test.describe.serial('Apache Pinot Query Editor - Basic Functionality', () => {
   let datasourceUid: string;
 
-  test.beforeAll(async ({ createDataSourceConfigPage }) => {
-    // Create and configure datasource before running query tests
-    const configPage = await createDataSourceConfigPage({
-      type: 'yesoreyeram-pinot-datasource',
-      deleteDataSourceAfterTest: false,
-    });
+  test('should display query editor with default options', async ({ createDataSourceConfigPage, explorePage, page }) => {
+    // Create and configure datasource in first test
+    if (!datasourceUid) {
+      const configPage = await createDataSourceConfigPage({
+        type: 'yesoreyeram-pinot-datasource',
+        deleteDataSourceAfterTest: false,
+      });
 
-    // Configure broker URL
-    const page = configPage.page;
-    await expect(page.getByPlaceholder('http://localhost:8099')).toBeVisible({ timeout: 15000 });
-    await page.getByPlaceholder('http://localhost:8099').fill('http://pinot-broker:8099');
+      await expect(page.getByPlaceholder('http://localhost:8099')).toBeVisible({ timeout: 15000 });
+      await page.getByPlaceholder('http://localhost:8099').fill('http://pinot-broker:8099');
 
-    // Configure controller URL for metadata
-    await page.getByText('Controller Configuration (Optional)').click();
-    await expect(page.getByPlaceholder('http://localhost:9000')).toBeVisible({ timeout: 15000 });
-    await page.getByPlaceholder('http://localhost:9000').fill('http://pinot-controller:9000');
+      await page.getByText('Controller Configuration (Optional)').click();
+      await expect(page.getByPlaceholder('http://localhost:9000')).toBeVisible({ timeout: 15000 });
+      await page.getByPlaceholder('http://localhost:9000').fill('http://pinot-controller:9000');
 
-    // Save and verify
-    const healthCheckResponse = await configPage.saveAndTest();
-    expect(healthCheckResponse.status()).toBe(200);
+      const healthCheckResponse = await configPage.saveAndTest();
+      expect(healthCheckResponse.status()).toBe(200);
 
-    datasourceUid = configPage.datasource.uid;
-  });
+      datasourceUid = configPage.datasource.uid;
+    }
+    
+    // Continue with test
 
-  test('should display query editor with default options', async ({ explorePage, page }) => {
     await explorePage.datasource.set(datasourceUid);
     await page.waitForTimeout(1000);
 
@@ -148,51 +146,34 @@ test.describe('Apache Pinot Query Editor - Basic Functionality', () => {
     expect(hasError || hasErrorInResults).toBe(true);
   });
 
-  test.afterAll(async ({ gotoDataSourceConfigPage, page }) => {
-    // Clean up - delete the datasource
-    if (datasourceUid) {
-      await gotoDataSourceConfigPage(datasourceUid);
-      await page.waitForTimeout(1000);
-
-      // Find and click delete button
-      const deleteButton = page.getByRole('button', { name: /delete/i });
-      if (await deleteButton.isVisible({ timeout: 5000 }).catch(() => false)) {
-        await deleteButton.click();
-
-        // Confirm deletion if prompted
-        const confirmButton = page.getByRole('button', { name: /confirm|yes|delete/i });
-        if (await confirmButton.isVisible({ timeout: 3000 }).catch(() => false)) {
-          await confirmButton.click();
-        }
-      }
-    }
-  });
 });
 
-test.describe('Apache Pinot Query Editor - Real Data Queries', () => {
+test.describe.serial('Apache Pinot Query Editor - Real Data Queries', () => {
   let datasourceUid: string;
 
-  test.beforeAll(async ({ createDataSourceConfigPage }) => {
-    const configPage = await createDataSourceConfigPage({
-      type: 'yesoreyeram-pinot-datasource',
-      deleteDataSourceAfterTest: false,
-    });
+  test('should query airlineStats sample data', async ({ createDataSourceConfigPage, explorePage, page }) => {
+    // Create datasource in first test
+    if (!datasourceUid) {
+      const configPage = await createDataSourceConfigPage({
+        type: 'yesoreyeram-pinot-datasource',
+        deleteDataSourceAfterTest: false,
+      });
 
-    const page = configPage.page;
-    await expect(page.getByPlaceholder('http://localhost:8099')).toBeVisible({ timeout: 15000 });
-    await page.getByPlaceholder('http://localhost:8099').fill('http://pinot-broker:8099');
-    
-    await page.getByText('Controller Configuration (Optional)').click();
-    await expect(page.getByPlaceholder('http://localhost:9000')).toBeVisible({ timeout: 15000 });
-    await page.getByPlaceholder('http://localhost:9000').fill('http://pinot-controller:9000');
+      await expect(page.getByPlaceholder('http://localhost:8099')).toBeVisible({ timeout: 15000 });
+      await page.getByPlaceholder('http://localhost:8099').fill('http://pinot-broker:8099');
+      
+      await page.getByText('Controller Configuration (Optional)').click();
+      await expect(page.getByPlaceholder('http://localhost:9000')).toBeVisible({ timeout: 15000 });
+      await page.getByPlaceholder('http://localhost:9000').fill('http://pinot-controller:9000');
 
-    const healthCheckResponse = await configPage.saveAndTest();
-    expect(healthCheckResponse.status()).toBe(200);
+      const healthCheckResponse = await configPage.saveAndTest();
+      expect(healthCheckResponse.status()).toBe(200);
 
-    datasourceUid = configPage.datasource.uid;
-  });
+      datasourceUid = configPage.datasource.uid;
+    }
 
-  test('should query airlineStats sample data', async ({ explorePage, page }) => {
+    // Continue with test
+
     await explorePage.datasource.set(datasourceUid);
     await page.waitForTimeout(1000);
 
@@ -267,48 +248,34 @@ test.describe('Apache Pinot Query Editor - Real Data Queries', () => {
     const errorCount = await errorElements.count();
     expect(errorCount).toBe(0);
   });
-
-  test.afterAll(async ({ gotoDataSourceConfigPage, page }) => {
-    if (datasourceUid) {
-      await gotoDataSourceConfigPage(datasourceUid);
-      await page.waitForTimeout(1000);
-
-      const deleteButton = page.getByRole('button', { name: /delete/i });
-      if (await deleteButton.isVisible({ timeout: 5000 }).catch(() => false)) {
-        await deleteButton.click();
-        const confirmButton = page.getByRole('button', { name: /confirm|yes|delete/i });
-        if (await confirmButton.isVisible({ timeout: 3000 }).catch(() => false)) {
-          await confirmButton.click();
-        }
-      }
-    }
-  });
 });
 
-test.describe('Apache Pinot Query Editor - Time Series with Macros', () => {
+test.describe.serial('Apache Pinot Query Editor - Time Series with Macros', () => {
   let datasourceUid: string;
 
-  test.beforeAll(async ({ createDataSourceConfigPage }) => {
-    const configPage = await createDataSourceConfigPage({
-      type: 'yesoreyeram-pinot-datasource',
-      deleteDataSourceAfterTest: false,
-    });
+  test('should execute time series query with $__timeFilter macro', async ({ createDataSourceConfigPage, explorePage, page }) => {
+    // Create datasource in first test
+    if (!datasourceUid) {
+      const configPage = await createDataSourceConfigPage({
+        type: 'yesoreyeram-pinot-datasource',
+        deleteDataSourceAfterTest: false,
+      });
 
-    const page = configPage.page;
-    await expect(page.getByPlaceholder('http://localhost:8099')).toBeVisible({ timeout: 15000 });
-    await page.getByPlaceholder('http://localhost:8099').fill('http://pinot-broker:8099');
-    
-    await page.getByText('Controller Configuration (Optional)').click();
-    await expect(page.getByPlaceholder('http://localhost:9000')).toBeVisible({ timeout: 15000 });
-    await page.getByPlaceholder('http://localhost:9000').fill('http://pinot-controller:9000');
+      await expect(page.getByPlaceholder('http://localhost:8099')).toBeVisible({ timeout: 15000 });
+      await page.getByPlaceholder('http://localhost:8099').fill('http://pinot-broker:8099');
+      
+      await page.getByText('Controller Configuration (Optional)').click();
+      await expect(page.getByPlaceholder('http://localhost:9000')).toBeVisible({ timeout: 15000 });
+      await page.getByPlaceholder('http://localhost:9000').fill('http://pinot-controller:9000');
 
-    const healthCheckResponse = await configPage.saveAndTest();
-    expect(healthCheckResponse.status()).toBe(200);
+      const healthCheckResponse = await configPage.saveAndTest();
+      expect(healthCheckResponse.status()).toBe(200);
 
-    datasourceUid = configPage.datasource.uid;
-  });
+      datasourceUid = configPage.datasource.uid;
+    }
 
-  test('should execute time series query with $__timeFilter macro', async ({ explorePage, page }) => {
+    // Continue with test
+
     await explorePage.datasource.set(datasourceUid);
     await page.waitForTimeout(1000);
 
@@ -491,22 +458,6 @@ test.describe('Apache Pinot Query Editor - Time Series with Macros', () => {
       path: 'docs/images/query-error-example.png',
       fullPage: false
     });
-  });
-
-  test.afterAll(async ({ gotoDataSourceConfigPage, page }) => {
-    if (datasourceUid) {
-      await gotoDataSourceConfigPage(datasourceUid);
-      await page.waitForTimeout(1000);
-
-      const deleteButton = page.getByRole('button', { name: /delete/i });
-      if (await deleteButton.isVisible({ timeout: 5000 }).catch(() => false)) {
-        await deleteButton.click();
-        const confirmButton = page.getByRole('button', { name: /confirm|yes|delete/i });
-        if (await confirmButton.isVisible({ timeout: 3000 }).catch(() => false)) {
-          await confirmButton.click();
-        }
-      }
-    }
   });
 });
 
