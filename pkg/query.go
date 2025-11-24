@@ -425,8 +425,10 @@ func applyMacros(sql string, timeRange backend.TimeRange) string {
 	sql = strings.ReplaceAll(sql, "$__timeToMs", fmt.Sprintf("%d", toMs))
 	sql = strings.ReplaceAll(sql, "$__timeTo", fmt.Sprintf("%d", toMs))
 
-	// Replace $__timeFilter(column) with column BETWEEN fromMs AND toMs
+	// Replace $__timeFilter(column) with column >= fromMs AND column < toMs
 	// Pattern: $__timeFilter(columnName)
+	// Note: Column name is NOT quoted to allow it to work in all SQL contexts
+	// (SELECT, WHERE, GROUP BY, ORDER BY). Users can manually quote if needed.
 	filterPattern := "$__timeFilter("
 	for {
 		startIdx := strings.Index(sql, filterPattern)
@@ -441,15 +443,12 @@ func applyMacros(sql string, timeRange backend.TimeRange) string {
 		}
 		endIdx += startIdx
 		
-		// Extract column name
+		// Extract column name (includes quotes if user provided them)
 		columnName := sql[startIdx+len(filterPattern) : endIdx]
 		columnName = strings.TrimSpace(columnName)
 		
-		// Quote column name to handle reserved keywords (e.g., "timestamp")
-		quotedColumn := fmt.Sprintf("\"%s\"", columnName)
-		
-		// Create the replacement filter
-		replacement := fmt.Sprintf("%s >= %d AND %s < %d", quotedColumn, fromMs, quotedColumn, toMs)
+		// Create the replacement filter (no automatic quoting)
+		replacement := fmt.Sprintf("%s >= %d AND %s < %d", columnName, fromMs, columnName, toMs)
 		
 		// Replace in SQL
 		sql = sql[:startIdx] + replacement + sql[endIdx+1:]

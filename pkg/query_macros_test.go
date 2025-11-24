@@ -59,12 +59,12 @@ func TestApplyMacros(t *testing.T) {
 		{
 			name:     "$__timeFilter(column) replacement",
 			input:    "SELECT * FROM metrics WHERE $__timeFilter(timestamp)",
-			expected: "SELECT * FROM metrics WHERE " + fmt.Sprintf("\"timestamp\" >= %d AND \"timestamp\" < %d", fromMs, toMs),
+			expected: "SELECT * FROM metrics WHERE " + fmt.Sprintf("timestamp >= %d AND timestamp < %d", fromMs, toMs),
 		},
 		{
 			name:     "$__timeFilter with spaces",
 			input:    "SELECT * FROM metrics WHERE $__timeFilter( timestamp )",
-			expected: "SELECT * FROM metrics WHERE " + fmt.Sprintf("\"timestamp\" >= %d AND \"timestamp\" < %d", fromMs, toMs),
+			expected: "SELECT * FROM metrics WHERE " + fmt.Sprintf("timestamp >= %d AND timestamp < %d", fromMs, toMs),
 		},
 		{
 			name:     "Multiple macros",
@@ -74,7 +74,7 @@ func TestApplyMacros(t *testing.T) {
 		{
 			name:     "Complex query with time filter",
 			input:    "SELECT timestamp, value FROM metrics WHERE $__timeFilter(timestamp) AND value > 10 ORDER BY timestamp",
-			expected: "SELECT timestamp, value FROM metrics WHERE " + fmt.Sprintf("\"timestamp\" >= %d AND \"timestamp\" < %d", fromMs, toMs) + " AND value > 10 ORDER BY timestamp",
+			expected: "SELECT timestamp, value FROM metrics WHERE " + fmt.Sprintf("timestamp >= %d AND timestamp < %d", fromMs, toMs) + " AND value > 10 ORDER BY timestamp",
 		},
 		{
 			name:     "No macros - unchanged",
@@ -84,7 +84,7 @@ func TestApplyMacros(t *testing.T) {
 		{
 			name:     "Multiple time filters",
 			input:    "SELECT * FROM t1 WHERE $__timeFilter(ts1) UNION SELECT * FROM t2 WHERE $__timeFilter(ts2)",
-			expected: "SELECT * FROM t1 WHERE " + fmt.Sprintf("\"ts1\" >= %d AND \"ts1\" < %d", fromMs, toMs) + " UNION SELECT * FROM t2 WHERE " + fmt.Sprintf("\"ts2\" >= %d AND \"ts2\" < %d", fromMs, toMs),
+			expected: "SELECT * FROM t1 WHERE " + fmt.Sprintf("ts1 >= %d AND ts1 < %d", fromMs, toMs) + " UNION SELECT * FROM t2 WHERE " + fmt.Sprintf("ts2 >= %d AND ts2 < %d", fromMs, toMs),
 		},
 	}
 
@@ -109,8 +109,8 @@ func TestApplyMacrosWithRealTimeRange(t *testing.T) {
 	sql := "SELECT * FROM metrics WHERE $__timeFilter(timestamp)"
 	result := applyMacros(sql, timeRange)
 
-	// Should contain the quoted column name and numeric timestamps
-	assert.Contains(t, result, "\"timestamp\" >=")
-	assert.Contains(t, result, "AND \"timestamp\" <")
+	// Should contain the unquoted column name and numeric timestamps
+	assert.Contains(t, result, "timestamp >=")
+	assert.Contains(t, result, "AND timestamp <")
 	assert.NotContains(t, result, "$__timeFilter")
 }
