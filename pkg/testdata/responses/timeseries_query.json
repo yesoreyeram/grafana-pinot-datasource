@@ -1,0 +1,15 @@
+{
+  "resultTable": {
+    "dataSchema": {
+      "columnNames": ["timestamp", "value"],
+      "columnDataTypes": ["TIMESTAMP", "DOUBLE"]
+    },
+    "rows": [
+      [1638360000000, 42.5],
+      [1638360060000, 43.2],
+      [1638360120000, 44.1]
+    ]
+  },
+  "numDocsScanned": 3,
+  "timeUsedMs": 8
+}

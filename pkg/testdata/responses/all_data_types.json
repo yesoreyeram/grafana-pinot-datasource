@@ -1,0 +1,22 @@
+{
+  "resultTable": {
+    "dataSchema": {
+      "columnNames": [
+        "int_col", "long_col", "float_col", "double_col",
+        "boolean_col", "timestamp_col", "string_col", "bytes_col", "json_col"
+      ],
+      "columnDataTypes": [
+        "INT", "LONG", "FLOAT", "DOUBLE",
+        "BOOLEAN", "TIMESTAMP", "STRING", "BYTES", "JSON"
+      ]
+    },
+    "rows": [
+      [
+        42, 1234567890, 3.14, 2.71828,
+        true, 1638360000000, "test string", "Ynl0ZXM=", "{\"key\":\"value\"}"
+      ]
+    ]
+  },
+  "numDocsScanned": 1,
+  "timeUsedMs": 2
+}

@@ -18,33 +18,18 @@ import (
 var updateGolden = flag.Bool("update", false, "update golden files")
 
 // TestQueryDataGolden tests query data responses using golden files
+// Uses httpmock file responder to colocate Pinot response JSON with golden files
 func TestQueryDataGolden(t *testing.T) {
 	tests := []struct {
-		name          string
-		queryModel    QueryModel
-		pinotResponse PinotResponse
-		description   string
+		name        string
+		queryModel  QueryModel
+		description string
 	}{
 		{
 			name: "simple_select_table",
 			queryModel: QueryModel{
 				RawSQL: "SELECT id, name, age FROM users LIMIT 10",
 				Format: "table",
-			},
-			pinotResponse: PinotResponse{
-				ResultTable: &ResultTable{
-					DataSchema: DataSchema{
-						ColumnNames:     []string{"id", "name", "age"},
-						ColumnDataTypes: []string{"LONG", "STRING", "INT"},
-					},
-					Rows: [][]interface{}{
-						{float64(1), "Alice", float64(25)},
-						{float64(2), "Bob", float64(30)},
-						{float64(3), "Charlie", float64(35)},
-					},
-				},
-				NumDocsScanned: 3,
-				TimeUsedMs:     5,
 			},
 			description: "Simple SELECT query with multiple data types",
 		},
@@ -55,21 +40,6 @@ func TestQueryDataGolden(t *testing.T) {
 				Format:     "timeseries",
 				TimeColumn: "timestamp",
 			},
-			pinotResponse: PinotResponse{
-				ResultTable: &ResultTable{
-					DataSchema: DataSchema{
-						ColumnNames:     []string{"timestamp", "value"},
-						ColumnDataTypes: []string{"TIMESTAMP", "DOUBLE"},
-					},
-					Rows: [][]interface{}{
-						{float64(1638360000000), 42.5},
-						{float64(1638360060000), 43.2},
-						{float64(1638360120000), 44.1},
-					},
-				},
-				NumDocsScanned: 3,
-				TimeUsedMs:     8,
-			},
 			description: "Timeseries query with timestamp and value columns",
 		},
 		{
@@ -77,21 +47,6 @@ func TestQueryDataGolden(t *testing.T) {
 			queryModel: QueryModel{
 				RawSQL: "SELECT COUNT(*) as count, AVG(price) as avg_price, SUM(quantity) as total_qty FROM orders GROUP BY category",
 				Format: "table",
-			},
-			pinotResponse: PinotResponse{
-				ResultTable: &ResultTable{
-					DataSchema: DataSchema{
-						ColumnNames:     []string{"category", "count", "avg_price", "total_qty"},
-						ColumnDataTypes: []string{"STRING", "LONG", "DOUBLE", "LONG"},
-					},
-					Rows: [][]interface{}{
-						{"Electronics", float64(150), 299.99, float64(450)},
-						{"Clothing", float64(200), 49.99, float64(800)},
-						{"Books", float64(100), 19.99, float64(350)},
-					},
-				},
-				NumDocsScanned: 450,
-				TimeUsedMs:     15,
 			},
 			description: "Aggregation query with GROUP BY and aggregate functions",
 		},
@@ -101,28 +56,6 @@ func TestQueryDataGolden(t *testing.T) {
 				RawSQL: "SELECT * FROM test_table LIMIT 1",
 				Format: "table",
 			},
-			pinotResponse: PinotResponse{
-				ResultTable: &ResultTable{
-					DataSchema: DataSchema{
-						ColumnNames: []string{
-							"int_col", "long_col", "float_col", "double_col",
-							"boolean_col", "timestamp_col", "string_col", "bytes_col", "json_col",
-						},
-						ColumnDataTypes: []string{
-							"INT", "LONG", "FLOAT", "DOUBLE",
-							"BOOLEAN", "TIMESTAMP", "STRING", "BYTES", "JSON",
-						},
-					},
-					Rows: [][]interface{}{
-						{
-							float64(42), float64(1234567890), float64(3.14), 2.71828,
-							true, float64(1638360000000), "test string", "Ynl0ZXM=", `{"key":"value"}`,
-						},
-					},
-				},
-				NumDocsScanned: 1,
-				TimeUsedMs:     2,
-			},
 			description: "Query testing all Pinot data types",
 		},
 		{
@@ -130,21 +63,6 @@ func TestQueryDataGolden(t *testing.T) {
 			queryModel: QueryModel{
 				RawSQL: "SELECT u.id, u.name, o.order_id, o.total FROM users u JOIN orders o ON u.id = o.user_id LIMIT 5",
 				Format: "table",
-			},
-			pinotResponse: PinotResponse{
-				ResultTable: &ResultTable{
-					DataSchema: DataSchema{
-						ColumnNames:     []string{"id", "name", "order_id", "total"},
-						ColumnDataTypes: []string{"LONG", "STRING", "LONG", "DOUBLE"},
-					},
-					Rows: [][]interface{}{
-						{float64(1), "Alice", float64(101), 99.99},
-						{float64(1), "Alice", float64(102), 149.99},
-						{float64(2), "Bob", float64(103), 79.99},
-					},
-				},
-				NumDocsScanned: 10,
-				TimeUsedMs:     12,
 			},
 			description: "JOIN query with multiple tables",
 		},
@@ -154,21 +72,6 @@ func TestQueryDataGolden(t *testing.T) {
 				RawSQL: "SELECT id, name, optional_field FROM users",
 				Format: "table",
 			},
-			pinotResponse: PinotResponse{
-				ResultTable: &ResultTable{
-					DataSchema: DataSchema{
-						ColumnNames:     []string{"id", "name", "optional_field"},
-						ColumnDataTypes: []string{"LONG", "STRING", "STRING"},
-					},
-					Rows: [][]interface{}{
-						{float64(1), "Alice", "value1"},
-						{float64(2), "Bob", nil},
-						{float64(3), "Charlie", "value3"},
-					},
-				},
-				NumDocsScanned: 3,
-				TimeUsedMs:     4,
-			},
 			description: "Query with NULL values in results",
 		},
 		{
@@ -176,21 +79,6 @@ func TestQueryDataGolden(t *testing.T) {
 			queryModel: QueryModel{
 				RawSQL: "SELECT user_id, order_date, total, ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY order_date) as row_num FROM orders",
 				Format: "table",
-			},
-			pinotResponse: PinotResponse{
-				ResultTable: &ResultTable{
-					DataSchema: DataSchema{
-						ColumnNames:     []string{"user_id", "order_date", "total", "row_num"},
-						ColumnDataTypes: []string{"LONG", "TIMESTAMP", "DOUBLE", "LONG"},
-					},
-					Rows: [][]interface{}{
-						{float64(1), float64(1638360000000), 99.99, float64(1)},
-						{float64(1), float64(1638446400000), 149.99, float64(2)},
-						{float64(2), float64(1638532800000), 79.99, float64(1)},
-					},
-				},
-				NumDocsScanned: 5,
-				TimeUsedMs:     10,
 			},
 			description: "Query with window functions",
 		},
@@ -201,10 +89,14 @@ func TestQueryDataGolden(t *testing.T) {
 			httpmock.Activate()
 			defer httpmock.DeactivateAndReset()
 
-			// Setup mock
-			body, _ := json.Marshal(tt.pinotResponse)
+			// Use file responder to load Pinot response from JSON file
+			// This colocates the response data with golden files for easier verification
+			responsePath := filepath.Join("testdata", "responses", tt.name+".json")
+			responseData, err := os.ReadFile(responsePath)
+			require.NoError(t, err, "Failed to read response file: %s", responsePath)
+			
 			httpmock.RegisterResponder("POST", "http://test-broker:8099/query/sql",
-				httpmock.NewBytesResponder(200, body))
+				httpmock.NewBytesResponder(200, responseData))
 
 			// Create client and datasource
 			client, err := New(PinotClientOptions{
@@ -232,7 +124,7 @@ func TestQueryDataGolden(t *testing.T) {
 			// Convert frame to golden-testable format
 			goldenData := frameToGoldenData(resp.Frames[0], tt.description)
 
-			// Golden file path
+			// Golden file path (using same naming convention as response file)
 			goldenPath := filepath.Join("testdata", "golden", tt.name+".golden.json")
 
 			if *updateGolden {
