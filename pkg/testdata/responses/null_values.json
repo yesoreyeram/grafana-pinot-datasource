@@ -1,0 +1,15 @@
+{
+  "resultTable": {
+    "dataSchema": {
+      "columnNames": ["id", "name", "optional_field"],
+      "columnDataTypes": ["LONG", "STRING", "STRING"]
+    },
+    "rows": [
+      [1, "Alice", "value1"],
+      [2, "Bob", null],
+      [3, "Charlie", "value3"]
+    ]
+  },
+  "numDocsScanned": 3,
+  "timeUsedMs": 4
+}

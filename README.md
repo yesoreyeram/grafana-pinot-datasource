@@ -50,15 +50,21 @@ You can add additional datasources through the Grafana UI:
 
 The `docker/pinot` folder contains the full definition of the demo tables so you can tweak schemas, table configs, and ingestion jobs:
 
-- `airlineStats_OFFLINE`: simple flight punctuality metrics keyed by carrier and route.
-- `baseballStats_OFFLINE`: 2022 season hitting stats for a handful of MLB players.
+- `airlineStats`: Simple flight punctuality metrics keyed by carrier and route
+- `baseballStats`: 2022 season hitting stats for a handful of MLB players  
+- `ecommerce_*`: E-commerce data with customers, products, orders, and order items
+- `metricsTimeseries`: Time series metrics data with 60,000+ data points spanning 7 days
+  - **Metrics**: cpu_usage, memory_usage, disk_io, network_throughput, request_latency
+  - **Hosts**: web-1, web-2, web-3, api-1, api-2, db-1, db-2
+  - **Regions**: us-east-1, us-west-2, eu-west-1
+  - **Intervals**: 5-minute data points with daily patterns
+  - **Features**: Includes null values (10% random) for testing null handling
 
 Each dataset ships with:
 
 - `schema.json` – Pinot schema definition
 - `table.json` – table configuration (offline tables with replication factor 1)
 - `data/*.json` – newline-delimited JSON samples loaded via the ingestion job
-- `ingestion-job.yaml` – `pinot-admin.sh LaunchDataIngestionJob` spec describing how to build/upload segments
 
 To re-run ingestion after editing any of these files:
 
@@ -67,6 +73,129 @@ docker compose run --rm pinot-init
 ```
 
 That command retries table creation and segment uploads against the running controller.
+
+## Querying Data
+
+### Query Editor
+
+The plugin provides a full-featured SQL query editor with two modes:
+
+1. **Raw SQL Mode** (Code): Write SQL queries directly with syntax highlighting
+2. **Query Builder Mode**: Visual query builder with table/column selection (requires controller configuration)
+
+![Query Editor](docs/images/query-editor.png)
+
+### Format Options
+
+- **Table**: Display results in tabular format (default)
+- **Time series**: Display results as time series data
+  - Requires specifying a time column containing timestamp data
+  - Timestamps should be in milliseconds (Pinot standard)
+
+### Grafana Time Filter Macros
+
+The plugin supports Grafana's time range macros for dynamic time-based queries:
+
+| Macro | Description | Example Output |
+|-------|-------------|----------------|
+| `$__timeFrom` | Start of selected time range (milliseconds) | `1638360000000` |
+| `$__timeTo` | End of selected time range (milliseconds) | `1638446400000` |
+| `$__timeFilter(column)` | Complete time range filter | `column >= 1638360000000 AND column < 1638446400000` |
+| `$__timeFromMs` | Explicit millisecond variant | `1638360000000` |
+| `$__timeToMs` | Explicit millisecond variant | `1638446400000` |
+
+**Usage Example**:
+```sql
+-- Using $__timeFilter (recommended)
+SELECT timestamp, AVG(value) 
+FROM metricsTimeseries 
+WHERE $__timeFilter(timestamp)
+GROUP BY timestamp
+
+-- Using individual macros
+SELECT timestamp, value
+FROM metricsTimeseries  
+WHERE timestamp >= $__timeFrom AND timestamp < $__timeTo
+```
+
+The macros are automatically replaced with the current dashboard/panel time range in milliseconds, making queries dynamic and reusable across different time periods.
+
+### Query Examples
+
+**Simple SELECT query**:
+```sql
+SELECT Origin, Dest, COUNT(*) as flight_count 
+FROM airlineStats 
+GROUP BY Origin, Dest 
+LIMIT 10
+```
+
+**Time series query with Grafana macros**:
+```sql
+SELECT timestamp, AVG(value) as avg_value
+FROM metricsTimeseries
+WHERE $__timeFilter(timestamp)
+GROUP BY timestamp
+ORDER BY timestamp
+```
+
+**Time series query with individual macros**:
+```sql
+SELECT timestamp, metric_name, value
+FROM metricsTimeseries
+WHERE timestamp >= $__timeFrom AND timestamp < $__timeTo
+  AND metric_name = 'cpu_usage'
+ORDER BY timestamp
+```
+
+**JOIN query**:
+```sql
+SELECT o.order_id, o.total, c.name
+FROM ecommerce_orders o
+JOIN ecommerce_customers c ON o.customer_id = c.customer_id
+LIMIT 20
+```
+
+**Aggregation with window functions**:
+```sql
+SELECT 
+  user_id, 
+  order_date, 
+  total,
+  ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY order_date) as order_number
+FROM ecommerce_orders
+```
+
+### Query Builder (Requires Controller)
+
+When the controller URL is configured, the query builder provides:
+
+- **Table selection**: Browse available tables from the dropdown
+- **Column autocomplete**: Select columns with data type information
+- **Visual filters**: Build WHERE clauses visually
+- **Aggregation functions**: COUNT, SUM, AVG, MIN, MAX support
+- **GROUP BY**: Visual group by clause builder
+
+The query builder automatically fetches:
+- Available tables via `GET /tables`
+- Table schemas via `GET /tables/{tableName}/schema`
+
+### Supported Data Types
+
+The plugin supports all Apache Pinot data types:
+
+| Pinot Type | Grafana Type | Notes |
+|------------|--------------|-------|
+| INT | int64 | Integer values |
+| LONG | int64 | Long integer values |
+| FLOAT | float64 | Single precision floating point |
+| DOUBLE | float64 | Double precision floating point |
+| BOOLEAN | bool | Boolean values |
+| TIMESTAMP | time.Time | Millisecond precision timestamps |
+| STRING | string | Text values |
+| BYTES | string | Base64 encoded binary data |
+| JSON | string | JSON formatted strings |
+
 
 ## Configuration Options
 

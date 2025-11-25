@@ -1,0 +1,15 @@
+{
+  "resultTable": {
+    "dataSchema": {
+      "columnNames": ["id", "name", "order_id", "total"],
+      "columnDataTypes": ["LONG", "STRING", "LONG", "DOUBLE"]
+    },
+    "rows": [
+      [1, "Alice", 101, 99.99],
+      [1, "Alice", 102, 149.99],
+      [2, "Bob", 103, 79.99]
+    ]
+  },
+  "numDocsScanned": 10,
+  "timeUsedMs": 12
+}

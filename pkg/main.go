@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
 // ============================================================================
@@ -125,6 +124,45 @@ type PinotClient struct {
 // TablesResponse represents the response from the tables API
 type TablesResponse struct {
 	Tables []string `json:"tables"`
+}
+
+// TableSchemaResponse represents the response from the table schema API
+type TableSchemaResponse struct {
+	SchemaName          string                   `json:"schemaName"`
+	DimensionFieldSpecs []FieldSpec              `json:"dimensionFieldSpecs"`
+	MetricFieldSpecs    []FieldSpec              `json:"metricFieldSpecs"`
+	DateTimeFieldSpecs  []DateTimeFieldSpec      `json:"dateTimeFieldSpecs"`
+	TimeFieldSpec       *TimeFieldSpec           `json:"timeFieldSpec"`
+}
+
+// FieldSpec represents a field specification in Pinot schema
+type FieldSpec struct {
+	Name         string `json:"name"`
+	DataType     string `json:"dataType"`
+	DefaultValue string `json:"defaultNullValue,omitempty"`
+	MaxLength    int    `json:"maxLength,omitempty"`
+}
+
+// DateTimeFieldSpec represents a date-time field specification
+type DateTimeFieldSpec struct {
+	Name         string `json:"name"`
+	DataType     string `json:"dataType"`
+	Format       string `json:"format"`
+	Granularity  string `json:"granularity"`
+	DefaultValue string `json:"defaultNullValue,omitempty"`
+}
+
+// TimeFieldSpec represents a time field specification (deprecated but still supported)
+type TimeFieldSpec struct {
+	IncomingGranularitySpec *GranularitySpec `json:"incomingGranularitySpec"`
+	OutgoingGranularitySpec *GranularitySpec `json:"outgoingGranularitySpec,omitempty"`
+}
+
+// GranularitySpec represents time granularity specification
+type GranularitySpec struct {
+	Name     string `json:"name"`
+	DataType string `json:"dataType"`
+	TimeType string `json:"timeType"`
 }
 
 // ============================================================================
@@ -281,9 +319,14 @@ func (c *PinotClient) Health(ctx context.Context) error {
 
 // Query executes a SQL query against the Pinot broker
 func (c *PinotClient) Query(ctx context.Context, sql string) (*http.Response, error) {
-	queryPayload := fmt.Sprintf(`{"sql": "%s"}`, sql)
+	// Create query payload with proper JSON encoding to handle special characters
+	payload := map[string]string{"sql": sql}
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal query payload: %w", err)
+	}
 
-	resp, err := c.brokerClient.doRequest(ctx, "POST", "/query/sql", strings.NewReader(queryPayload))
+	resp, err := c.brokerClient.doRequest(ctx, "POST", "/query/sql", strings.NewReader(string(payloadBytes)))
 	if err != nil {
 		return nil, err
 	}
@@ -342,6 +385,38 @@ func (c *PinotClient) Schemas(ctx context.Context) ([]string, error) {
 	return []string{}, nil
 }
 
+// TableSchema retrieves the schema for a specific table from the Pinot controller
+func (c *PinotClient) TableSchema(ctx context.Context, tableName string) (*TableSchemaResponse, error) {
+	if c.controllerClient == nil {
+		return nil, fmt.Errorf("controller client not configured")
+	}
+
+	// Fetch schema from controller API: GET /tables/{tableName}/schema
+	path := fmt.Sprintf("/tables/%s/schema", tableName)
+	resp, err := c.controllerClient.doRequest(ctx, "GET", path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch table schema: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("get table schema failed with status %d: %s", resp.StatusCode, string(body))
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response: %w", err)
+	}
+
+	var schemaResp TableSchemaResponse
+	if err := json.Unmarshal(body, &schemaResp); err != nil {
+		return nil, fmt.Errorf("failed to parse schema response: %w", err)
+	}
+
+	return &schemaResp, nil
+}
+
 // ============================================================================
 // DATASOURCE - Grafana Interface Implementation
 // ============================================================================
@@ -395,26 +470,11 @@ func (ds *DataSource) CheckHealth(ctx context.Context, req *backend.CheckHealthR
 }
 
 // QueryData handles query requests from Grafana
-// TODO: Implement actual query execution and data transformation
 func (ds *DataSource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	response := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
-		frame := data.NewFrame(
-			q.QueryType,
-			data.NewField("response", nil, []string{"pinot response"}),
-		).SetMeta(
-			&data.FrameMeta{
-				Notices: []data.Notice{
-					{Text: "Apache Pinot™ query works, but not fully implemented"},
-				},
-			},
-		)
-
-		response.Responses[q.RefID] = backend.DataResponse{
-			Frames: data.Frames{frame},
-			Status: backend.StatusOK,
-		}
+		response.Responses[q.RefID] = ds.executeQuery(ctx, q)
 	}
 
 	return response, nil

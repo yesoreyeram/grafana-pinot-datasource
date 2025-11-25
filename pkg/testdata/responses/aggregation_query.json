@@ -1,0 +1,15 @@
+{
+  "resultTable": {
+    "dataSchema": {
+      "columnNames": ["category", "count", "avg_price", "total_qty"],
+      "columnDataTypes": ["STRING", "LONG", "DOUBLE", "LONG"]
+    },
+    "rows": [
+      ["Electronics", 150, 299.99, 450],
+      ["Clothing", 200, 49.99, 800],
+      ["Books", 100, 19.99, 350]
+    ]
+  },
+  "numDocsScanned": 450,
+  "timeUsedMs": 15
+}

@@ -1,0 +1,79 @@
+{
+  "description": "Query testing all Pinot data types",
+  "frameName": "A",
+  "rows": 1,
+  "fields": [
+    {
+      "name": "int_col",
+      "type": "[]*int64",
+      "length": 1,
+      "values": [
+        42
+      ]
+    },
+    {
+      "name": "long_col",
+      "type": "[]*int64",
+      "length": 1,
+      "values": [
+        1234567890
+      ]
+    },
+    {
+      "name": "float_col",
+      "type": "[]*float64",
+      "length": 1,
+      "values": [
+        3.14
+      ]
+    },
+    {
+      "name": "double_col",
+      "type": "[]*float64",
+      "length": 1,
+      "values": [
+        2.71828
+      ]
+    },
+    {
+      "name": "boolean_col",
+      "type": "[]*bool",
+      "length": 1,
+      "values": [
+        true
+      ]
+    },
+    {
+      "name": "timestamp_col",
+      "type": "[]*time.Time",
+      "length": 1,
+      "values": [
+        "2021-12-01T12:00:00Z"
+      ]
+    },
+    {
+      "name": "string_col",
+      "type": "[]*string",
+      "length": 1,
+      "values": [
+        "test string"
+      ]
+    },
+    {
+      "name": "bytes_col",
+      "type": "[]*string",
+      "length": 1,
+      "values": [
+        "Ynl0ZXM="
+      ]
+    },
+    {
+      "name": "json_col",
+      "type": "[]*string",
+      "length": 1,
+      "values": [
+        "{\"key\":\"value\"}"
+      ]
+    }
+  ]
+}
