@@ -209,7 +209,21 @@ describe('generateSQL', () => {
     expect(generateSQL(visualQuery)).toBe("SELECT * FROM users WHERE name LIKE '%john%' LIMIT 100");
   });
 
-  it('should handle IN operator', () => {
+  it('should handle IN operator with comma-separated values', () => {
+    const visualQuery: VisualQuery = {
+      ...defaultVisualQuery,
+      table: 'orders',
+      columns: [],
+      filters: [
+        { column: 'status', operator: 'IN', value: 'pending,active' },
+      ],
+      limit: 100,
+    };
+    
+    expect(generateSQL(visualQuery)).toBe("SELECT * FROM orders WHERE status IN ('pending', 'active') LIMIT 100");
+  });
+
+  it('should handle IN operator with pre-quoted values', () => {
     const visualQuery: VisualQuery = {
       ...defaultVisualQuery,
       table: 'orders',

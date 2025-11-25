@@ -95,8 +95,18 @@ export const generateSQL = (visualQuery: VisualQuery): string => {
         
         // Handle IN/NOT IN with list values
         if (['IN', 'NOT IN'].includes(f.operator)) {
-          const values = f.value.includes(',') ? f.value : `'${f.value}'`;
-          return `${f.column} ${f.operator} (${values})`;
+          // If value already contains quotes, use as-is; otherwise quote each comma-separated value
+          const trimmedValue = f.value.trim();
+          if (trimmedValue.includes("'")) {
+            // Values are already quoted
+            return `${f.column} ${f.operator} (${trimmedValue})`;
+          } else if (trimmedValue.includes(',')) {
+            // Quote each comma-separated value
+            const quotedValues = trimmedValue.split(',').map(v => `'${v.trim()}'`).join(', ');
+            return `${f.column} ${f.operator} (${quotedValues})`;
+          } else {
+            return `${f.column} ${f.operator} ('${trimmedValue}')`;
+          }
         }
         
         // Handle LIKE patterns
@@ -104,9 +114,10 @@ export const generateSQL = (visualQuery: VisualQuery): string => {
           return `${f.column} ${f.operator} '${f.value}'`;
         }
         
-        // Check if value is numeric
-        const isNumeric = !isNaN(Number(f.value)) && f.value.trim() !== '';
-        const formattedValue = isNumeric ? f.value : `'${f.value}'`;
+        // Check if value is numeric (handle whitespace-only strings correctly)
+        const trimmedValue = f.value.trim();
+        const isNumeric = trimmedValue !== '' && !isNaN(Number(trimmedValue));
+        const formattedValue = isNumeric ? trimmedValue : `'${f.value}'`;
         
         return `${f.column} ${f.operator} ${formattedValue}`;
       });
@@ -176,7 +187,7 @@ export const VisualEditor: React.FC<VisualEditorProps> = ({
       } catch (err) {
         console.error('Failed to fetch columns:', err);
         setColumnOptions([]);
-        setError('Failed to fetch table schema. Controller may not be configured.');
+        setError('Failed to fetch table schema. Please check datasource configuration or table permissions.');
       }
     };
 
