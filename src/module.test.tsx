@@ -57,7 +57,7 @@ jest.mock('@grafana/ui', () => ({
     );
   },
   FieldSet: ({ children, style }: any) => <div style={style}>{children}</div>,
-  Select: ({ value, onChange, options }: any) => (
+  Select: ({ value, onChange, options, 'aria-label': ariaLabel }: any) => (
     <select
       value={value}
       onChange={(e) => {
@@ -67,6 +67,7 @@ jest.mock('@grafana/ui', () => ({
         }
       }}
       data-testid="select-input"
+      aria-label={ariaLabel}
     >
       {options.map((opt: any) => (
         <option key={opt.value} value={opt.value}>
@@ -81,18 +82,67 @@ jest.mock('@grafana/ui', () => ({
       {isOpen && <div>{children}</div>}
     </div>
   ),
+  RadioButtonGroup: ({ value, onChange, options }: any) => (
+    <div data-testid="radio-button-group">
+      {options.map((opt: any) => (
+        <button
+          key={opt.value}
+          data-testid={`mode-${opt.value}`}
+          onClick={() => onChange(opt.value)}
+          className={value === opt.value ? 'active' : ''}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  ),
+  MultiSelect: ({ value, onChange, options, placeholder }: any) => (
+    <select
+      multiple
+      value={value?.map((v: any) => v.value) || []}
+      onChange={(e) => {
+        const selectedOptions = Array.from(e.target.selectedOptions, (opt: any) => ({
+          label: opt.text,
+          value: opt.value,
+        }));
+        onChange(selectedOptions);
+      }}
+      data-testid="multi-select"
+    >
+      {options?.map((opt: any) => (
+        <option key={opt.value} value={opt.value}>
+          {opt.label}
+        </option>
+      ))}
+    </select>
+  ),
+  Stack: ({ children }: any) => <div data-testid="stack">{children}</div>,
+  IconButton: ({ name, onClick, tooltip }: any) => (
+    <button onClick={onClick} data-testid={`icon-button-${name}`} title={tooltip}>
+      {name}
+    </button>
+  ),
+  Alert: ({ title, children }: any) => (
+    <div data-testid="alert">
+      <strong>{title}</strong>
+      {children}
+    </div>
+  ),
+  CodeEditor: ({ value }: any) => (
+    <pre data-testid="code-editor">{value}</pre>
+  ),
 }));
 
 // Mock @grafana/plugin-ui
 jest.mock('@grafana/plugin-ui', () => ({
-  SQLEditor: ({ query, onChange, onRunQuery }: any) => (
+  SQLEditor: ({ query, onChange, onBlur }: any) => (
     <div data-testid="sql-editor">
       <textarea
         data-testid="sql-textarea"
-        value={query.rawSql || ''}
-        onChange={(e) => onChange({ ...query, rawSql: e.target.value })}
+        value={query || ''}
+        onChange={(e) => onChange(e.target.value)}
+        onBlur={onBlur}
       />
-      <button onClick={onRunQuery} data-testid="run-query">Run Query</button>
     </div>
   ),
 }));
@@ -102,6 +152,9 @@ jest.mock('@grafana/runtime', () => ({
   DataSourceWithBackend: class MockDataSourceWithBackend {
     constructor(public instanceSettings: any) {}
   },
+  getBackendSrv: () => ({
+    datasourceRequest: jest.fn().mockResolvedValue({ data: { tables: [], columns: [] } }),
+  }),
 }));
 
 // Common test data
@@ -391,9 +444,10 @@ describe('ConfigEditor', () => {
 });
 
 describe('QueryEditor', () => {
-  it('should render query editor with SQL editor', () => {
+  it('should render query editor with visual builder by default', () => {
     const QueryEditor = plugin.components.QueryEditor!;
     const mockDatasource = {
+      uid: 'test-uid',
       getResource: jest.fn().mockResolvedValue({ tables: [] }),
     } as any;
     const mockQuery = { refId: 'A', rawSql: '', format: 'table' } as any;
@@ -409,16 +463,18 @@ describe('QueryEditor', () => {
       />
     );
     
-    // Check for SQL editor component
-    expect(container.querySelector('[data-testid="sql-editor"]')).toBeInTheDocument();
+    // Check for mode selector (Builder/Code) and format selector
+    expect(container.textContent).toContain('Mode');
+    expect(container.textContent).toContain('Format');
   });
 
   it('should render format selector', () => {
     const QueryEditor = plugin.components.QueryEditor!;
     const mockDatasource = {
+      uid: 'test-uid',
       getResource: jest.fn().mockResolvedValue({ tables: [] }),
     } as any;
-    const mockQuery = { refId: 'A', rawSql: '', format: 'table' } as any;
+    const mockQuery = { refId: 'A', rawSql: '', format: 'table', editorMode: 'code' } as any;
     const mockOnRunQuery = jest.fn();
     const mockOnChange = jest.fn();
     
@@ -432,16 +488,17 @@ describe('QueryEditor', () => {
     );
     
     // Check that format selector exists
-    const selects = screen.getAllByTestId('select-input');
+    const selects = screen.getAllByLabelText(/format/i);
     expect(selects.length).toBeGreaterThan(0);
   });
 
   it('should show time column input when format is timeseries', () => {
     const QueryEditor = plugin.components.QueryEditor!;
     const mockDatasource = {
+      uid: 'test-uid',
       getResource: jest.fn().mockResolvedValue({ tables: [] }),
     } as any;
-    const mockQuery = { refId: 'A', rawSql: '', format: 'timeseries', timeColumn: '' } as any;
+    const mockQuery = { refId: 'A', rawSql: '', format: 'timeseries', timeColumn: '', editorMode: 'code' } as any;
     const mockOnRunQuery = jest.fn();
     const mockOnChange = jest.fn();
     
@@ -455,7 +512,7 @@ describe('QueryEditor', () => {
     );
     
     // Check for time column input
-    const timeInput = screen.getByPlaceholderText(/timestamp|created_at/i);
+    const timeInput = screen.getByPlaceholderText(/timestamp/i);
     expect(timeInput).toBeInTheDocument();
   });
 });
