@@ -30,6 +30,7 @@ jest.mock('@grafana/ui', () => ({
       {children}
     </div>
   ),
+  InlineFieldRow: ({ children }: any) => <div data-testid="inline-field-row">{children}</div>,
   Select: ({ value, onChange, options, placeholder, 'aria-label': ariaLabel }: any) => (
     <select
       value={value?.value || ''}
@@ -103,6 +104,15 @@ jest.mock('@grafana/ui', () => ({
         </button>
       ))}
     </div>
+  ),
+  Checkbox: ({ value, onChange, disabled }: any) => (
+    <input
+      type="checkbox"
+      checked={value}
+      onChange={onChange}
+      disabled={disabled}
+      data-testid="checkbox"
+    />
   ),
 }));
 
@@ -343,6 +353,76 @@ describe('generateSQL', () => {
     
     expect(generateSQL(visualQuery)).toBe('SELECT * FROM orders WHERE amount >= 1000 LIMIT 100');
   });
+
+  it('should generate time series query with automatic time filter', () => {
+    const visualQuery: VisualQuery = {
+      ...defaultVisualQuery,
+      table: 'events',
+      columns: ['value'],
+      timeSeries: {
+        enabled: true,
+        timeColumn: 'timestamp',
+        autoApplyTimeFilter: true,
+      },
+      limit: 100,
+    };
+    
+    expect(generateSQL(visualQuery)).toBe('SELECT timestamp, value FROM events WHERE $__timeFilter(timestamp) ORDER BY timestamp ASC LIMIT 100');
+  });
+
+  it('should generate time series query without automatic time filter', () => {
+    const visualQuery: VisualQuery = {
+      ...defaultVisualQuery,
+      table: 'events',
+      columns: ['value'],
+      timeSeries: {
+        enabled: true,
+        timeColumn: 'timestamp',
+        autoApplyTimeFilter: false,
+      },
+      limit: 100,
+    };
+    
+    expect(generateSQL(visualQuery)).toBe('SELECT timestamp, value FROM events ORDER BY timestamp ASC LIMIT 100');
+  });
+
+  it('should include time column in GROUP BY for aggregations', () => {
+    const visualQuery: VisualQuery = {
+      ...defaultVisualQuery,
+      table: 'metrics',
+      columns: [],
+      aggregations: [
+        { func: 'AVG', column: 'value' },
+      ],
+      timeSeries: {
+        enabled: true,
+        timeColumn: 'timestamp',
+        autoApplyTimeFilter: true,
+      },
+      limit: 100,
+    };
+    
+    expect(generateSQL(visualQuery)).toBe('SELECT timestamp, AVG(value) FROM metrics WHERE $__timeFilter(timestamp) GROUP BY timestamp ORDER BY timestamp ASC LIMIT 100');
+  });
+
+  it('should handle time series with multiple filters', () => {
+    const visualQuery: VisualQuery = {
+      ...defaultVisualQuery,
+      table: 'events',
+      columns: [],
+      filters: [
+        { column: 'status', operator: '=', value: 'active' },
+      ],
+      timeSeries: {
+        enabled: true,
+        timeColumn: 'created_at',
+        autoApplyTimeFilter: true,
+      },
+      limit: 100,
+    };
+    
+    expect(generateSQL(visualQuery)).toBe("SELECT created_at, * FROM events WHERE $__timeFilter(created_at) AND status = 'active' ORDER BY created_at ASC LIMIT 100");
+  });
 });
 
 describe('defaultVisualQuery', () => {
@@ -355,6 +435,11 @@ describe('defaultVisualQuery', () => {
       groupBy: [],
       orderBy: [],
       limit: 100,
+      timeSeries: {
+        enabled: false,
+        timeColumn: undefined,
+        autoApplyTimeFilter: false,
+      },
     });
   });
 });
